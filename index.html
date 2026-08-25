@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Hapcuuiu</title>
 <meta name="description" content="Kalkulator proyeksi modal, profit, dan cut loss untuk day trading saham IDX, lengkap dengan jurnal transaksi dan ringkasan bulanan.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -111,10 +112,10 @@
   .app-header{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:22px;flex-wrap:wrap;}
   .brand{display:flex;align-items:center;gap:12px;}
   .brand-mark{
-    width:38px;height:38px;border-radius:6px;background:var(--accent);color:var(--accent-contrast);
-    display:flex;align-items:center;justify-content:center;font-family:"Sora";font-weight:700;font-size:15px;
-    flex:none;
+    width:38px;height:38px;border-radius:9px;background:var(--surface);border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;flex:none;box-shadow:var(--shadow);
   }
+  .brand-mark svg{display:block;}
   .brand-text h1{font-size:19px;letter-spacing:-0.01em;}
   .brand-text p{margin:2px 0 0;color:var(--text-muted);font-size:12.5px;}
   .header-meta{color:var(--text-faint);font-size:12px;text-align:right;}
@@ -257,6 +258,26 @@
   tbody tr:last-child td{border-bottom:none;}
   .ticker-cell{font-family:"IBM Plex Mono";font-weight:600;letter-spacing:0.02em;}
 
+  /* mobile jurnal cards */
+  .mobile-only{display:none;}
+  @media (max-width:700px){
+    .desktop-only{display:none;}
+    .mobile-only{display:block;}
+  }
+  .jurnal-cards{display:flex;flex-direction:column;gap:12px;padding:14px;}
+  .jurnal-card{border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;background:var(--surface);}
+  .jc-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:2px;}
+  .jc-head .ticker-cell{font-size:14.5px;}
+  .jc-date{font-size:11.5px;color:var(--text-faint);margin-bottom:10px;}
+  .jc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin-bottom:10px;}
+  .jc-item{display:flex;flex-direction:column;gap:2px;}
+  .jc-item.wide{grid-column:1 / -1;}
+  .jc-label{font-size:10.5px;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-faint);}
+  .jc-val{font-family:"IBM Plex Mono";font-size:13px;font-variant-numeric:tabular-nums;}
+  .jc-val.profit{color:var(--profit);font-weight:600;}
+  .jc-val.loss{color:var(--loss);font-weight:600;}
+  .jc-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:10px;border-top:1px dashed var(--border);}
+
   .pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px;text-transform:uppercase;letter-spacing:0.03em;}
   .pill.planned{background:var(--warn-soft);color:var(--warn);}
   .pill.tp{background:var(--profit-soft);color:var(--profit);}
@@ -303,7 +324,14 @@
 <div class="app">
   <div class="app-header">
     <div class="brand">
-      <div class="brand-mark">HC</div>
+      <div class="brand-mark" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24">
+          <line x1="7" y1="4" x2="7" y2="20" stroke="#1E9455" stroke-width="2.2" stroke-linecap="round"/>
+          <rect x="3.5" y="11" width="7" height="9" rx="1.6" fill="#1E9455"/>
+          <line x1="17" y1="2" x2="17" y2="15" stroke="#D9392B" stroke-width="2.2" stroke-linecap="round"/>
+          <rect x="13.5" y="5" width="7" height="6" rx="1.6" fill="#D9392B"/>
+        </svg>
+      </div>
       <div class="brand-text">
         <h1>Hapcuuiu</h1>
       </div>
@@ -341,6 +369,14 @@
 
     <!-- KALKULATOR -->
     <section class="panel active" id="panel-kalkulator">
+      <div class="card" id="aggregateCard" style="margin-bottom:18px; display:none;">
+        <div class="card-header">
+          <h2>Ringkasan Keseluruhan</h2>
+          <span class="hint">Semua bulan</span>
+        </div>
+        <div class="summary-strip" id="aggregateStats" style="border:none;border-radius:0;margin-bottom:0;"></div>
+      </div>
+
       <div class="calc-grid">
         <div class="card">
           <div class="card-header">
@@ -414,24 +450,27 @@
           <h2>Jurnal Transaksi</h2>
           <span class="hint" id="jurnalCount"></span>
         </div>
-        <div class="table-wrap">
-          <table id="jurnalTable">
-            <thead>
-              <tr>
-                <th>Tanggal</th>
-                <th>Emiten</th>
-                <th style="text-align:right;">Modal</th>
-                <th style="text-align:right;">Entry</th>
-                <th style="text-align:right;">TP</th>
-                <th style="text-align:right;">SL</th>
-                <th style="text-align:right;">Lot</th>
-                <th>Status</th>
-                <th style="text-align:right;">Hasil (Rp)</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="jurnalBody"></tbody>
-          </table>
+        <div id="jurnalListRoot">
+          <div class="table-wrap desktop-only">
+            <table id="jurnalTable">
+              <thead>
+                <tr>
+                  <th>Tanggal</th>
+                  <th>Emiten</th>
+                  <th style="text-align:right;">Modal</th>
+                  <th style="text-align:right;">Entry</th>
+                  <th style="text-align:right;">TP</th>
+                  <th style="text-align:right;">SL</th>
+                  <th style="text-align:right;">Lot</th>
+                  <th>Status</th>
+                  <th style="text-align:right;">Hasil (Rp)</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="jurnalBody"></tbody>
+            </table>
+          </div>
+          <div class="jurnal-cards mobile-only" id="jurnalCards"></div>
         </div>
         <div class="empty-state" id="jurnalEmpty" style="display:none;">
           Belum ada transaksi. Hitung setup di tab Kalkulator lalu klik "Simpan ke Jurnal".
@@ -737,7 +776,7 @@
       btn.disabled = false;
       if(res.error){ alert("Gagal menyimpan: " + res.error.message); return; }
       return fetchTrades().then(function(){
-        renderJurnal();
+        afterTradesChanged();
         tabBtns.forEach(function(b){ b.classList.toggle("active", b.dataset.tab==="jurnal"); });
         Object.keys(panels).forEach(function(k){ panels[k].classList.toggle("active", k==="jurnal"); });
       });
@@ -745,26 +784,60 @@
   });
 
   // ---- jurnal ----
+  var STATUS_OPTS = [
+    ["planned","Rencana"],
+    ["tp","Take Profit"],
+    ["sl","Cut Loss"],
+    ["manual","Manual"]
+  ];
+  function statusLabel(status){
+    return (STATUS_OPTS.find(function(o){ return o[0]===status; }) || STATUS_OPTS[0])[1];
+  }
+  function statusControlsHtml(t){
+    var selectHtml = '<select class="status-select" data-action="status">' +
+      STATUS_OPTS.map(function(o){ return '<option value="'+o[0]+'"'+(t.status===o[0]?" selected":"")+'>'+o[1]+'</option>'; }).join("") +
+      '</select>';
+    var extra = "";
+    if(t.status==="manual"){
+      extra = ' <input type="number" class="exit-input" data-action="exit" placeholder="harga exit" value="'+(t.exitPrice||"")+'">';
+    }
+    return selectHtml + extra;
+  }
+  function statusCell(t){
+    return '<span class="pill '+(t.status||"planned")+'">'+statusLabel(t.status)+'</span><br>' +
+      '<div style="margin-top:6px;">'+statusControlsHtml(t)+'</div>';
+  }
+  function jcItem(label, value, extraCls, wide){
+    return '<div class="jc-item'+(wide?" wide":"")+'"><span class="jc-label">'+label+'</span>' +
+      '<span class="jc-val'+(extraCls?" "+extraCls:"")+'">'+value+'</span></div>';
+  }
+
   function renderJurnal(){
     var body = document.getElementById("jurnalBody");
+    var cards = document.getElementById("jurnalCards");
     var empty = document.getElementById("jurnalEmpty");
     var count = document.getElementById("jurnalCount");
+    var root = document.getElementById("jurnalListRoot");
     count.textContent = trades.length + " transaksi";
 
     if(trades.length===0){
       body.innerHTML = "";
+      cards.innerHTML = "";
       empty.style.display = "block";
       return;
     }
     empty.style.display = "none";
 
-    body.innerHTML = trades.map(function(t){
+    var rowsHtml = "", cardsHtml = "";
+    trades.forEach(function(t){
       var c = calcTrade(t);
       var hasil = actualResult(t);
+      var hasilCls = hasil===null ? "" : (hasil>=0 ? "profit" : "loss");
+      var hasilText = hasil===null ? "—" : fmtRp(hasil);
       var hasilCell = hasil===null ? '<span style="color:var(--text-faint);">—</span>' :
-        '<span style="color:'+(hasil>=0?'var(--profit)':'var(--loss)')+';font-weight:600;">'+fmtRp(hasil)+'</span>';
+        '<span style="color:'+(hasil>=0?'var(--profit)':'var(--loss)')+';font-weight:600;">'+hasilText+'</span>';
 
-      return '<tr data-id="'+t.id+'">' +
+      rowsHtml += '<tr data-id="'+t.id+'">' +
         '<td>'+(t.tanggal||"—")+'</td>' +
         '<td class="ticker-cell">'+escapeHtml(t.ticker)+'</td>' +
         '<td class="num">'+fmtRp(t.modal)+'</td>' +
@@ -776,11 +849,33 @@
         '<td class="num">'+hasilCell+'</td>' +
         '<td><button class="icon-btn danger" data-action="delete">Hapus</button></td>' +
       '</tr>';
-    }).join("");
 
-    body.querySelectorAll('select[data-action="status"]').forEach(function(sel){
+      cardsHtml += '<div class="jurnal-card" data-id="'+t.id+'">' +
+        '<div class="jc-head">' +
+          '<span class="ticker-cell">'+escapeHtml(t.ticker)+'</span>' +
+          '<span class="pill '+(t.status||"planned")+'">'+statusLabel(t.status)+'</span>' +
+        '</div>' +
+        '<div class="jc-date">'+(t.tanggal||"—")+'</div>' +
+        '<div class="jc-grid">' +
+          jcItem("Modal", fmtRp(t.modal)) +
+          jcItem("Lot", fmtNum(c.lot)) +
+          jcItem("Entry", fmtNum(t.entry)) +
+          jcItem("Hasil", hasilText, hasilCls) +
+          jcItem("TP", fmtNum(t.tp)) +
+          jcItem("SL", fmtNum(t.sl)) +
+        '</div>' +
+        '<div class="jc-controls">' + statusControlsHtml(t) +
+          '<button class="icon-btn danger" data-action="delete" style="margin-left:auto;">Hapus</button>' +
+        '</div>' +
+      '</div>';
+    });
+
+    body.innerHTML = rowsHtml;
+    cards.innerHTML = cardsHtml;
+
+    root.querySelectorAll('select[data-action="status"]').forEach(function(sel){
       sel.addEventListener("change", function(){
-        var id = sel.closest("tr").dataset.id;
+        var id = sel.closest("[data-id]").dataset.id;
         var newStatus = sel.value;
         var patch = { status: newStatus };
         if(newStatus !== "manual") patch.exitPrice = null;
@@ -788,51 +883,60 @@
         updateTradeRow(id, patch).then(function(res){
           sel.disabled = false;
           if(res.error){ alert("Gagal update: " + res.error.message); return; }
-          return fetchTrades().then(renderJurnal);
+          return fetchTrades().then(afterTradesChanged);
         });
       });
     });
-    body.querySelectorAll('input[data-action="exit"]').forEach(function(inp){
+    root.querySelectorAll('input[data-action="exit"]').forEach(function(inp){
       inp.addEventListener("change", function(){
-        var id = inp.closest("tr").dataset.id;
+        var id = inp.closest("[data-id]").dataset.id;
         var val = inp.value==="" ? null : Number(inp.value);
         updateTradeRow(id, { exitPrice: val }).then(function(res){
           if(res.error){ alert("Gagal update: " + res.error.message); return; }
-          return fetchTrades().then(renderJurnal);
+          return fetchTrades().then(afterTradesChanged);
         });
       });
     });
-    body.querySelectorAll('button[data-action="delete"]').forEach(function(btn){
+    root.querySelectorAll('button[data-action="delete"]').forEach(function(btn){
       btn.addEventListener("click", function(){
-        var id = btn.closest("tr").dataset.id;
+        var id = btn.closest("[data-id]").dataset.id;
         if(!confirm("Hapus transaksi ini dari jurnal?")) return;
         btn.disabled = true;
         deleteTradeRow(id).then(function(res){
           if(res.error){ btn.disabled = false; alert("Gagal hapus: " + res.error.message); return; }
-          return fetchTrades().then(renderJurnal);
+          return fetchTrades().then(afterTradesChanged);
         });
       });
     });
   }
 
-  function statusCell(t){
-    var opts = [
-      ["planned","Rencana"],
-      ["tp","Take Profit"],
-      ["sl","Cut Loss"],
-      ["manual","Manual"]
-    ];
-    var selectHtml = '<select class="status-select" data-action="status">' +
-      opts.map(function(o){ return '<option value="'+o[0]+'"'+(t.status===o[0]?" selected":"")+'>'+o[1]+'</option>'; }).join("") +
-      '</select>';
-    var pillCls = t.status || "planned";
-    var pillLabel = (opts.find(function(o){return o[0]===t.status;})||opts[0])[1];
-    var extra = "";
-    if(t.status==="manual"){
-      extra = ' <input type="number" class="exit-input" data-action="exit" placeholder="harga exit" value="'+(t.exitPrice||"")+'">';
-    }
-    return '<span class="pill '+pillCls+'">'+pillLabel+'</span><br>' +
-      '<div style="margin-top:6px;">'+selectHtml + extra + '</div>';
+  // ---- ringkasan keseluruhan (semua bulan, tampil di atas kalkulator) ----
+  function renderAggregateSummary(){
+    var card = document.getElementById("aggregateCard");
+    var statsEl = document.getElementById("aggregateStats");
+    var closed = trades.filter(function(t){ return t.status!=="planned"; });
+    var profit = 0, loss = 0, closedCount = 0;
+    closed.forEach(function(t){
+      var hasil = actualResult(t);
+      if(hasil===null) return;
+      if(hasil>=0) profit += hasil; else loss += hasil;
+      closedCount += 1;
+    });
+    if(closedCount===0){ card.style.display = "none"; return; }
+    card.style.display = "block";
+    var net = profit + loss;
+    statsEl.innerHTML =
+      stat("Keuntungan", fmtRp(profit), "profit") +
+      stat("Kerugian", fmtRp(loss), "loss") +
+      stat("Net Profit", fmtRp(net), net>=0?"profit":"loss") +
+      stat("Transaksi Closed", fmtNum(closedCount), "neutral");
+  }
+
+  function afterTradesChanged(){
+    renderJurnal();
+    renderAggregateSummary();
+    var ringkasanTab = document.querySelector('.tab-btn[data-tab="ringkasan"]');
+    if(ringkasanTab && ringkasanTab.classList.contains("active")) renderRingkasan();
   }
 
   // ---- ringkasan bulanan ----
@@ -988,17 +1092,14 @@
       document.getElementById("btnSwitchAccount").addEventListener("click", function(){
         setActiveAccount(null);
       });
-      fetchTrades().then(function(){
-        renderJurnal();
-        var ringkasanTab = document.querySelector('.tab-btn[data-tab="ringkasan"]');
-        if(ringkasanTab && ringkasanTab.classList.contains("active")) renderRingkasan();
-      });
+      fetchTrades().then(afterTradesChanged);
     } else {
       authGate.style.display = "block";
       appShell.classList.remove("ready");
       headerMeta.innerHTML = "";
       trades = [];
       renderJurnal();
+      renderAggregateSummary();
       showGateStage();
     }
   }
