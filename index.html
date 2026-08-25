@@ -197,15 +197,19 @@
   .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
   .btn-row{display:flex;gap:10px;margin-top:4px;flex-wrap:wrap;}
 
-  .btn-google{
-    display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
+  .account-list{display:flex;flex-direction:column;gap:8px;}
+  .account-btn{
+    display:flex;align-items:center;gap:10px;width:100%;text-align:left;
     background:var(--surface);color:var(--text);border:1px solid var(--border-strong);
-    font-family:"IBM Plex Sans";font-weight:600;font-size:13.5px;border-radius:6px;padding:10px 14px;cursor:pointer;
+    font-family:"IBM Plex Sans";font-weight:600;font-size:13.5px;border-radius:6px;padding:10px 12px;cursor:pointer;
     transition:background .15s ease, border-color .15s ease;
   }
-  .btn-google:hover{background:var(--surface-alt);}
-  .btn-google:disabled{opacity:0.6;cursor:default;}
-  .btn-google:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .account-btn:hover{background:var(--surface-alt);border-color:var(--accent);}
+  .account-btn .avatar{
+    width:28px;height:28px;border-radius:50%;background:var(--accent-soft);color:var(--accent);
+    display:flex;align-items:center;justify-content:center;font-family:"Sora";font-weight:700;font-size:12px;flex:none;
+  }
+  .account-btn .addr{font-family:"IBM Plex Mono";font-size:12.5px;color:var(--text);word-break:break-all;}
 
   /* result ledger */
   .ledger{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
@@ -302,7 +306,6 @@
       <div class="brand-mark">HC</div>
       <div class="brand-text">
         <h1>Hapcuuiu</h1>
-        <p>Proyeksi modal, profit &amp; cut loss untuk day trade IDX</p>
       </div>
     </div>
     <div class="header-meta" id="headerMeta"></div>
@@ -311,16 +314,20 @@
   <div id="authGate" class="auth-gate">
     <div class="auth-card">
       <h2>Masuk untuk mulai</h2>
-      <p>Jurnal transaksi Anda disimpan aman di akun Google Anda sendiri.</p>
-      <button class="btn-google" type="button" id="googleSignInBtn">
-        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
-          <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84c-.21 1.13-.84 2.09-1.8 2.73v2.27h2.91c1.7-1.57 2.69-3.88 2.69-6.64z"/>
-          <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.91-2.27c-.81.54-1.84.86-3.05.86-2.34 0-4.33-1.58-5.04-3.71H.96v2.34C2.44 15.98 5.48 18 9 18z"/>
-          <path fill="#FBBC05" d="M3.96 10.71c-.18-.54-.29-1.11-.29-1.71s.11-1.17.29-1.71V4.96H.96A8.996 8.996 0 000 9c0 1.45.35 2.83.96 4.04l3-2.33z"/>
-          <path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.48 0 2.44 2.02.96 4.96l3 2.33C4.67 5.16 6.66 3.58 9 3.58z"/>
-        </svg>
-        <span>Masuk dengan Google</span>
-      </button>
+      <div id="pinStage">
+        <p>Masukkan PIN untuk melanjutkan.</p>
+        <form class="auth-form" id="pinForm">
+          <div class="field" style="margin-bottom:0;">
+            <label for="pin-input">PIN</label>
+            <input type="password" id="pin-input" inputmode="numeric" pattern="[0-9]*" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="off">
+          </div>
+          <button class="btn" type="submit">Lanjutkan</button>
+        </form>
+      </div>
+      <div id="accountStage" style="display:none;">
+        <p>Pilih akun untuk membuka jurnal transaksinya.</p>
+        <div class="account-list" id="accountList"></div>
+      </div>
       <div class="auth-msg" id="authMsg"></div>
     </div>
   </div>
@@ -453,10 +460,18 @@
 
   var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  // Hardcoded allowlist: no real auth, just a PIN + account picker. Every row in
+  // "trades" is keyed by user_email with no password/identity check behind it.
+  var ACTIVE_USER_KEY = "hapcuuiu_active_user_v1";
+  var PIN_OK_KEY = "hapcuuiu_pin_ok_v1";
+  var PIN_CODE = "181200";
+  var ALLOWED_ACCOUNTS = ["rafiramadan.space@gmail.com", "aningtyas.gati@gmail.com"];
+
   var defaultSettings = { feeBeli: 0.15, feeJual: 0.25 };
   var settings = loadSettings();
   var trades = [];
-  var currentSession = null;
+  var activeEmail = localStorage.getItem(ACTIVE_USER_KEY) || null;
+  var pinVerified = localStorage.getItem(PIN_OK_KEY) === "1";
 
   function loadSettings(){
     try{
@@ -562,7 +577,9 @@
   }
 
   function fetchTrades(){
+    if(!activeEmail) return Promise.resolve({ data: [] });
     return sb.from("trades").select("*")
+      .eq("user_email", activeEmail)
       .order("tanggal", {ascending:false})
       .order("created_at", {ascending:false})
       .then(function(res){
@@ -573,10 +590,9 @@
   }
 
   function insertTrade(t){
-    var userId = currentSession && currentSession.user ? currentSession.user.id : null;
-    if(!userId) return Promise.resolve({ error:{ message:"Belum login" } });
+    if(!activeEmail) return Promise.resolve({ error:{ message:"Belum ada akun dipilih" } });
     return sb.from("trades").insert({
-      user_id: userId, ticker: t.ticker, tanggal: t.tanggal, modal: t.modal,
+      user_email: activeEmail, ticker: t.ticker, tanggal: t.tanggal, modal: t.modal,
       entry: t.entry, tp: t.tp, sl: t.sl, fee_beli: t.feeBeli, fee_jual: t.feeJual, status:"planned"
     });
   }
@@ -897,70 +913,98 @@
     '</div>';
   }
 
-  // ---- auth (Google sign-in) ----
+  // ---- account picker (hardcoded allowlist, no real auth) ----
   var authGate = document.getElementById("authGate");
   var appShell = document.getElementById("appShell");
   var headerMeta = document.getElementById("headerMeta");
+  var accountList = document.getElementById("accountList");
+  var pinStage = document.getElementById("pinStage");
+  var accountStage = document.getElementById("accountStage");
+  var pinForm = document.getElementById("pinForm");
+  var pinInput = document.getElementById("pin-input");
   var authMsg = document.getElementById("authMsg");
-  var googleSignInBtn = document.getElementById("googleSignInBtn");
 
-  function friendlyAuthError(message){
-    var m = (message||"").toLowerCase();
-    if(m.indexOf("rate limit") !== -1){
-      return "Terlalu banyak percobaan masuk dalam waktu singkat. Tunggu beberapa menit lalu coba lagi.";
-    }
-    if(m.indexOf("provider is not enabled") !== -1 || m.indexOf("unsupported provider") !== -1){
-      return "Sign in dengan Google belum diaktifkan di backend. Aktifkan dulu di dashboard.";
-    }
-    return "Gagal masuk: " + message;
+  function initialsOf(email){
+    return (email||"?").charAt(0).toUpperCase();
   }
 
-  function setAuthUI(session){
-    currentSession = session;
-    if(session && session.user){
+  function showGateStage(){
+    if(pinVerified){
+      pinStage.style.display = "none";
+      accountStage.style.display = "block";
+    } else {
+      pinStage.style.display = "block";
+      accountStage.style.display = "none";
+    }
+  }
+
+  pinForm.addEventListener("submit", function(e){
+    e.preventDefault();
+    if(pinInput.value === PIN_CODE){
+      pinVerified = true;
+      localStorage.setItem(PIN_OK_KEY, "1");
+      pinInput.value = "";
+      authMsg.textContent = "";
+      authMsg.className = "auth-msg";
+      showGateStage();
+    } else {
+      authMsg.textContent = "PIN salah, coba lagi.";
+      authMsg.className = "auth-msg error";
+      pinInput.value = "";
+      pinInput.focus();
+    }
+  });
+
+  function renderAccountList(){
+    accountList.innerHTML = ALLOWED_ACCOUNTS.map(function(email){
+      return '<button class="account-btn" type="button" data-email="'+escapeHtml(email)+'">' +
+        '<span class="avatar">'+initialsOf(email)+'</span>' +
+        '<span class="addr">'+escapeHtml(email)+'</span>' +
+      '</button>';
+    }).join("");
+    accountList.querySelectorAll(".account-btn").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        setActiveAccount(btn.dataset.email);
+      });
+    });
+  }
+
+  function setActiveAccount(email){
+    activeEmail = email;
+    if(email){
+      localStorage.setItem(ACTIVE_USER_KEY, email);
+    } else {
+      localStorage.removeItem(ACTIVE_USER_KEY);
+    }
+    refreshAuthUI();
+  }
+
+  function refreshAuthUI(){
+    if(activeEmail && ALLOWED_ACCOUNTS.indexOf(activeEmail) !== -1){
       authGate.style.display = "none";
       appShell.classList.add("ready");
-      headerMeta.innerHTML = '<span class="user-badge"><span class="email">'+escapeHtml(session.user.email)+'</span>' +
-        '<button class="icon-btn" id="btnLogout">Keluar</button></span>';
-      document.getElementById("btnLogout").addEventListener("click", function(){
-        sb.auth.signOut();
+      headerMeta.innerHTML = '<span class="user-badge"><span class="email">'+escapeHtml(activeEmail)+'</span>' +
+        '<button class="icon-btn" id="btnSwitchAccount">Ganti akun</button></span>';
+      document.getElementById("btnSwitchAccount").addEventListener("click", function(){
+        setActiveAccount(null);
+      });
+      fetchTrades().then(function(){
+        renderJurnal();
+        var ringkasanTab = document.querySelector('.tab-btn[data-tab="ringkasan"]');
+        if(ringkasanTab && ringkasanTab.classList.contains("active")) renderRingkasan();
       });
     } else {
       authGate.style.display = "block";
       appShell.classList.remove("ready");
       headerMeta.innerHTML = "";
       trades = [];
+      renderJurnal();
+      showGateStage();
     }
   }
 
-  googleSignInBtn.addEventListener("click", function(){
-    googleSignInBtn.disabled = true;
-    authMsg.textContent = "";
-    authMsg.className = "auth-msg";
-    sb.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: window.location.origin + window.location.pathname }
-    }).then(function(res){
-      if(res.error){
-        googleSignInBtn.disabled = false;
-        authMsg.textContent = friendlyAuthError(res.error.message);
-        authMsg.className = "auth-msg error";
-      }
-      // on success the browser navigates to Google's consent screen
-    });
-  });
-
-  sb.auth.onAuthStateChange(function(_event, session){
-    setAuthUI(session);
-    if(session && session.user){
-      fetchTrades().then(function(){
-        renderJurnal();
-        var ringkasanTab = document.querySelector('.tab-btn[data-tab="ringkasan"]');
-        if(ringkasanTab && ringkasanTab.classList.contains("active")) renderRingkasan();
-      });
-    }
-  });
-
+  renderAccountList();
+  refreshAuthUI();
   renderCalc();
 })();
 </script>
