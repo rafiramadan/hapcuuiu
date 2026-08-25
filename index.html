@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hapcuuiu</title>
+<meta name="description" content="Kalkulator proyeksi modal, profit, dan cut loss untuk day trading saham IDX, lengkap dengan jurnal transaksi dan ringkasan bulanan.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F6F7F4;
+    --surface:#FFFFFF;
+    --surface-alt:#ECEFEA;
+    --border:#D9DED4;
+    --border-strong:#BFC7B8;
+    --text:#182019;
+    --text-muted:#5B685F;
+    --text-faint:#8B9789;
+    --accent:#167F45;
+    --accent-soft:#E5F2EA;
+    --accent-contrast:#FFFFFF;
+    --profit:#1E9455;
+    --profit-soft:#E1F5E7;
+    --loss:#D9392B;
+    --loss-soft:#FBEAE7;
+    --warn:#8A6425;
+    --warn-soft:#F6EEDD;
+    --cat-purple:#8355E8;
+    --cat-purple-soft:#EFE7FB;
+    --cat-gold:#B8862A;
+    --cat-gold-soft:#FDF3D9;
+    --shadow: 0 1px 2px rgba(24,32,25,0.04), 0 8px 24px -12px rgba(24,32,25,0.12);
+    --radius: 8px;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#12161A;
+      --surface:#181D22;
+      --surface-alt:#1F252B;
+      --border:#2B333B;
+      --border-strong:#3B4650;
+      --text:#E8ECE7;
+      --text-muted:#9CA9A1;
+      --text-faint:#6C7A72;
+      --accent:#3FBE7C;
+      --accent-soft:#1B3324;
+      --accent-contrast:#0B2016;
+      --profit:#3FCB8C;
+      --profit-soft:#173328;
+      --loss:#FF7A66;
+      --loss-soft:#3A2220;
+      --warn:#E0AC4E;
+      --warn-soft:#332A16;
+      --cat-purple:#A78BFA;
+      --cat-purple-soft:#2A2440;
+      --cat-gold:#E0B84E;
+      --cat-gold-soft:#332B16;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#12161A;
+    --surface:#181D22;
+    --surface-alt:#1F252B;
+    --border:#2B333B;
+    --border-strong:#3B4650;
+    --text:#E8ECE7;
+    --text-muted:#9CA9A1;
+    --text-faint:#6C7A72;
+    --accent:#3FBE7C;
+    --accent-soft:#1B3324;
+    --accent-contrast:#0B2016;
+    --profit:#3FCB8C;
+    --profit-soft:#173328;
+    --loss:#FF7A66;
+    --loss-soft:#3A2220;
+    --warn:#E0AC4E;
+    --warn-soft:#332A16;
+    --cat-purple:#A78BFA;
+    --cat-purple-soft:#2A2440;
+    --cat-gold:#E0B84E;
+    --cat-gold-soft:#332B16;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+    color-scheme: dark;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size:14px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{
+    font-family:"Sora", ui-sans-serif, system-ui, sans-serif;
+    font-weight:600;
+    margin:0;
+    text-wrap:balance;
+  }
+  .mono{font-family:"IBM Plex Mono", ui-monospace, "SF Mono", monospace; font-variant-numeric: tabular-nums;}
+  .app{max-width:1180px;margin:0 auto;padding:28px 20px 64px;}
+
+  /* header */
+  .app-header{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:22px;flex-wrap:wrap;}
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand-mark{
+    width:38px;height:38px;border-radius:6px;background:var(--accent);color:var(--accent-contrast);
+    display:flex;align-items:center;justify-content:center;font-family:"Sora";font-weight:700;font-size:15px;
+    flex:none;
+  }
+  .brand-text h1{font-size:19px;letter-spacing:-0.01em;}
+  .brand-text p{margin:2px 0 0;color:var(--text-muted);font-size:12.5px;}
+  .header-meta{color:var(--text-faint);font-size:12px;text-align:right;}
+
+  /* tabs */
+  .tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:22px;}
+  .tab-btn{
+    appearance:none;border:none;background:transparent;color:var(--text-muted);
+    font-family:"Sora";font-weight:600;font-size:13px;letter-spacing:0.01em;
+    padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;
+    margin-bottom:-1px;transition:color .15s ease, border-color .15s ease;
+  }
+  .tab-btn:hover{color:var(--text);}
+  .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .tab-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px;}
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  /* cards */
+  .card{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    box-shadow:var(--shadow);
+  }
+  .card-header{
+    padding:14px 18px;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+  }
+  .card-header h2{font-size:14px;}
+  .card-header .hint{color:var(--text-faint);font-size:11.5px;}
+  .card-body{padding:18px;}
+
+  /* calculator layout */
+  .calc-grid{display:grid;grid-template-columns:minmax(280px,380px) 1fr;gap:18px;align-items:start;}
+  @media (max-width:820px){.calc-grid{grid-template-columns:1fr;}}
+
+  .field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+  .field label{font-size:11.5px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;}
+  .field .sub{font-size:11px;color:var(--text-faint);font-weight:400;text-transform:none;letter-spacing:0;}
+  .field input, .field select{
+    font-family:"IBM Plex Mono";font-size:13.5px;color:var(--text);
+    background:var(--surface-alt);border:1px solid var(--border);border-radius:6px;
+    padding:8px 10px;width:100%;transition:border-color .15s ease, background .15s ease;
+  }
+  .field input[type="text"], .field input[type="date"]{font-family:"IBM Plex Sans";}
+  .field input:focus, .field select:focus{
+    outline:none;border-color:var(--accent);background:var(--surface);
+  }
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .field-fee input{padding-right:26px;}
+  .fee-wrap{position:relative;}
+  .fee-wrap::after{content:"%";position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--text-faint);font-size:12px;font-family:"IBM Plex Mono";pointer-events:none;}
+
+  .divider{height:1px;background:var(--border);margin:16px 0;}
+
+  .btn{
+    appearance:none;border:1px solid var(--accent);background:var(--accent);color:var(--accent-contrast);
+    font-family:"Sora";font-weight:600;font-size:13px;border-radius:6px;padding:9px 14px;cursor:pointer;
+    transition:opacity .15s ease;
+  }
+  .btn:hover{opacity:0.88;}
+  .btn.secondary{background:transparent;color:var(--accent);}
+  .btn.ghost{background:transparent;color:var(--text-muted);border-color:var(--border);}
+  .btn.ghost:hover{color:var(--text);border-color:var(--border-strong);}
+  .btn.danger{background:transparent;color:var(--loss);border-color:var(--loss-soft);}
+  .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .btn-row{display:flex;gap:10px;margin-top:4px;flex-wrap:wrap;}
+
+  /* result ledger */
+  .ledger{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  .ledger-band{
+    display:grid;grid-template-columns:1fr 1fr;
+  }
+  @media (max-width:600px){.ledger-band{grid-template-columns:1fr;}}
+  .ledger-col{padding:16px 18px;}
+  .ledger-col + .ledger-col{border-left:1px solid var(--border);}
+  @media (max-width:600px){.ledger-col + .ledger-col{border-left:none;border-top:1px solid var(--border);}}
+  .ledger-col.tp{background:var(--profit-soft);}
+  .ledger-col.sl{background:var(--loss-soft);}
+  .ledger-col h3{font-size:12.5px;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:10px;}
+  .ledger-col.tp h3{color:var(--profit);}
+  .ledger-col.sl h3{color:var(--loss);}
+  .kv{display:flex;justify-content:space-between;align-items:baseline;padding:4px 0;font-size:13px;gap:10px;}
+  .kv .k{color:var(--text-muted);}
+  .kv .v{font-family:"IBM Plex Mono";font-variant-numeric:tabular-nums;text-align:right;}
+  .kv.total{border-top:1px dashed var(--border-strong);margin-top:6px;padding-top:8px;}
+  .kv.total .v{font-weight:600;font-size:14.5px;}
+  .kv.total.tp .v{color:var(--profit);}
+  .kv.total.sl .v{color:var(--loss);}
+
+  .summary-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px;}
+  @media (max-width:700px){.summary-strip{grid-template-columns:repeat(2,1fr);}}
+  .stat{background:var(--surface);padding:14px 16px;}
+  .stat .label{font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-faint);margin-bottom:6px;}
+  .stat .value{font-family:"IBM Plex Mono";font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;}
+  .stat .value.profit{color:var(--profit);}
+  .stat .value.loss{color:var(--loss);}
+  .stat .value.neutral{color:var(--accent);}
+  .stat .value.purple{color:var(--cat-purple);}
+  .stat .value.gold{color:var(--cat-gold);}
+
+  /* table */
+  .table-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;min-width:760px;}
+  thead th{
+    text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-faint);
+    font-weight:600;padding:9px 12px;border-bottom:1px solid var(--border-strong);white-space:nowrap;
+  }
+  tbody td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px;white-space:nowrap;}
+  tbody td.num{font-family:"IBM Plex Mono";font-variant-numeric:tabular-nums;text-align:right;}
+  tbody tr:hover{background:var(--surface-alt);}
+  tbody tr:last-child td{border-bottom:none;}
+  .ticker-cell{font-family:"IBM Plex Mono";font-weight:600;letter-spacing:0.02em;}
+
+  .pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px;text-transform:uppercase;letter-spacing:0.03em;}
+  .pill.planned{background:var(--warn-soft);color:var(--warn);}
+  .pill.tp{background:var(--profit-soft);color:var(--profit);}
+  .pill.sl{background:var(--loss-soft);color:var(--loss);}
+  .pill.manual{background:var(--accent-soft);color:var(--accent);}
+
+  .icon-btn{
+    appearance:none;border:1px solid var(--border);background:var(--surface);color:var(--text-muted);
+    border-radius:5px;padding:4px 8px;font-size:11.5px;cursor:pointer;font-family:"IBM Plex Sans";
+  }
+  .icon-btn:hover{color:var(--text);border-color:var(--border-strong);}
+  .icon-btn.danger:hover{color:var(--loss);border-color:var(--loss);}
+
+  .empty-state{padding:36px 18px;text-align:center;color:var(--text-faint);font-size:13px;}
+
+  select.status-select{
+    font-family:"IBM Plex Sans";font-size:12px;padding:5px 8px;border-radius:5px;
+    background:var(--surface-alt);border:1px solid var(--border);color:var(--text);
+  }
+  input.exit-input{width:90px;font-family:"IBM Plex Mono";font-size:12.5px;padding:5px 7px;border-radius:5px;background:var(--surface-alt);border:1px solid var(--border);color:var(--text);}
+
+  /* monthly */
+  .month-card{margin-bottom:14px;}
+  .month-head{display:flex;align-items:baseline;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--border);}
+  .month-head h3{font-size:14px;}
+  .month-head .delta{font-size:12px;font-family:"IBM Plex Mono";}
+  .month-head .delta.up{color:var(--profit);}
+  .month-head .delta.down{color:var(--loss);}
+  .bars{padding:16px 18px;display:flex;flex-direction:column;gap:10px;}
+  .bar-row{display:grid;grid-template-columns:110px 1fr 110px;align-items:center;gap:10px;}
+  .bar-row .lbl{font-size:12px;color:var(--text-muted);}
+  .bar-track{height:10px;background:var(--surface-alt);border-radius:99px;overflow:hidden;position:relative;}
+  .bar-fill{height:100%;border-radius:99px;}
+  .bar-fill.profit{background:var(--profit);}
+  .bar-fill.loss{background:var(--loss);}
+  .bar-row .val{font-family:"IBM Plex Mono";font-size:12.5px;text-align:right;font-variant-numeric:tabular-nums;}
+
+  .settings-inline{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;padding:14px 18px;background:var(--surface-alt);border-top:1px solid var(--border);}
+  .settings-inline .field{margin-bottom:0;min-width:120px;}
+  .settings-inline .note{font-size:11.5px;color:var(--text-faint);max-width:260px;line-height:1.4;}
+
+  footer{margin-top:30px;color:var(--text-faint);font-size:11.5px;text-align:center;}
+
+  @media (prefers-reduced-motion: reduce){*{transition:none !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">HC</div>
+      <div class="brand-text">
+        <h1>Hapcuuiu</h1>
+        <p>Proyeksi modal, profit &amp; cut loss untuk day trade IDX</p>
+      </div>
+    </div>
+    <div class="header-meta" id="headerMeta"></div>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab-btn active" data-tab="kalkulator" role="tab">Kalkulator</button>
+    <button class="tab-btn" data-tab="jurnal" role="tab">Jurnal Transaksi</button>
+    <button class="tab-btn" data-tab="ringkasan" role="tab">Ringkasan Bulanan</button>
+  </div>
+
+  <!-- KALKULATOR -->
+  <section class="panel active" id="panel-kalkulator">
+    <div class="calc-grid">
+      <div class="card">
+        <div class="card-header">
+          <h2>Setup Trade</h2>
+          <span class="hint">1 lot = 100 lembar</span>
+        </div>
+        <div class="card-body">
+          <div class="row2">
+            <div class="field">
+              <label for="in-ticker">Emiten</label>
+              <input type="text" id="in-ticker" placeholder="cth. ANTM" maxlength="8" style="text-transform:uppercase;">
+            </div>
+            <div class="field">
+              <label for="in-tanggal">Tanggal</label>
+              <input type="date" id="in-tanggal">
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="in-modal">Modal Trading (Rp)</label>
+            <input type="number" id="in-modal" inputmode="decimal" placeholder="5000000" min="0" step="1000">
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label for="in-entry">Harga Entry</label>
+              <input type="number" id="in-entry" inputmode="decimal" placeholder="2780" min="0" step="1">
+            </div>
+            <div class="field">
+              <label for="in-tp">Take Profit</label>
+              <input type="number" id="in-tp" inputmode="decimal" placeholder="2830" min="0" step="1">
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="in-sl">Cut Loss</label>
+            <input type="number" id="in-sl" inputmode="decimal" placeholder="2760" min="0" step="1">
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="row2">
+            <div class="field field-fee">
+              <label for="in-fee-beli">Fee Beli <span class="sub">broker + PPN</span></label>
+              <div class="fee-wrap"><input type="number" id="in-fee-beli" inputmode="decimal" step="0.001" min="0"></div>
+            </div>
+            <div class="field field-fee">
+              <label for="in-fee-jual">Fee Jual <span class="sub">broker + PPh</span></label>
+              <div class="fee-wrap"><input type="number" id="in-fee-jual" inputmode="decimal" step="0.001" min="0"></div>
+            </div>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn" id="btn-save-trade">Simpan ke Jurnal</button>
+            <button class="btn ghost" id="btn-reset-form">Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="summary-strip" id="quickStats"></div>
+        <div class="ledger" id="resultLedger"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- JURNAL -->
+  <section class="panel" id="panel-jurnal">
+    <div class="card">
+      <div class="card-header">
+        <h2>Jurnal Transaksi</h2>
+        <span class="hint" id="jurnalCount"></span>
+      </div>
+      <div class="table-wrap">
+        <table id="jurnalTable">
+          <thead>
+            <tr>
+              <th>Tanggal</th>
+              <th>Emiten</th>
+              <th style="text-align:right;">Modal</th>
+              <th style="text-align:right;">Entry</th>
+              <th style="text-align:right;">TP</th>
+              <th style="text-align:right;">SL</th>
+              <th style="text-align:right;">Lot</th>
+              <th>Status</th>
+              <th style="text-align:right;">Hasil (Rp)</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="jurnalBody"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="jurnalEmpty" style="display:none;">
+        Belum ada transaksi. Hitung setup di tab Kalkulator lalu klik "Simpan ke Jurnal".
+      </div>
+    </div>
+  </section>
+
+  <!-- RINGKASAN -->
+  <section class="panel" id="panel-ringkasan">
+    <div id="ringkasanContent"></div>
+  </section>
+
+  <footer>Kalkulasi bersifat estimasi &mdash; harga eksekusi riil dapat berbeda karena slippage &amp; antrian order. Data tersimpan lokal di browser Anda.</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var LOT_SIZE = 100;
+  var STORAGE_KEY = "ledgersaham_trades_v1";
+  var SETTINGS_KEY = "ledgersaham_settings_v1";
+
+  var defaultSettings = { feeBeli: 0.15, feeJual: 0.25 };
+  var settings = loadSettings();
+  var trades = loadTrades();
+
+  function loadSettings(){
+    try{
+      var raw = localStorage.getItem(SETTINGS_KEY);
+      if(!raw) return Object.assign({}, defaultSettings);
+      var parsed = JSON.parse(raw);
+      return Object.assign({}, defaultSettings, parsed);
+    }catch(e){ return Object.assign({}, defaultSettings); }
+  }
+  function saveSettings(){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+
+  function loadTrades(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return [];
+      var parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    }catch(e){ return []; }
+  }
+  function saveTrades(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(trades)); }
+
+  function fmtRp(n){
+    if(n===null||n===undefined||isNaN(n)) return "—";
+    var neg = n < 0;
+    var abs = Math.abs(n);
+    var s = abs.toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2});
+    return (neg?"-":"") + "Rp" + s;
+  }
+  function fmtNum(n, dec){
+    if(n===null||n===undefined||isNaN(n)) return "—";
+    return n.toLocaleString("en-US", {minimumFractionDigits:dec||0, maximumFractionDigits:dec||0});
+  }
+  function fmtPct(n){
+    if(n===null||n===undefined||isNaN(n)) return "—";
+    return (n>0?"+":"") + n.toFixed(2) + "%";
+  }
+  function todayISO(){
+    var d = new Date(Date.now());
+    return d.toISOString().slice(0,10);
+  }
+  function uid(){ return "t" + Math.random().toString(36).slice(2,10); }
+
+  // ---- core calculation ----
+  function calcLot(modal, entry, feeBeliPct){
+    if(!modal || !entry || entry<=0 || modal<=0) return {lot:0, lembar:0};
+    var costPerLot = entry * LOT_SIZE * (1 + feeBeliPct/100);
+    var lot = Math.floor(modal / costPerLot);
+    lot = Math.max(lot, 0);
+    return {lot: lot, lembar: lot*LOT_SIZE};
+  }
+
+  function sellLeg(lembar, price, feeJualPct, totalModal){
+    var nilaiJual = lembar * price;
+    var feeJual = nilaiJual * feeJualPct/100;
+    var hasil = nilaiJual - feeJual - totalModal;
+    var modalAkhir = totalModal + hasil;
+    var pct = totalModal>0 ? (hasil/totalModal*100) : null;
+    return {nilaiJual:nilaiJual, feeJual:feeJual, hasil:hasil, modalAkhir:modalAkhir, pct:pct};
+  }
+
+  function calcTrade(t){
+    var entry = Number(t.entry)||0, modal = Number(t.modal)||0;
+    var feeBeli = Number(t.feeBeli)||0, feeJual = Number(t.feeJual)||0;
+    var lotInfo = calcLot(modal, entry, feeBeli);
+    var lembar = lotInfo.lembar, lot = lotInfo.lot;
+    var modalUsed = lembar * entry;
+    var feeBeliRp = modalUsed * feeBeli/100;
+    var totalModal = modalUsed + feeBeliRp;
+    var sisaModal = modal - totalModal;
+
+    var tp = sellLeg(lembar, Number(t.tp)||0, feeJual, totalModal);
+    var sl = sellLeg(lembar, Number(t.sl)||0, feeJual, totalModal);
+
+    var rr = null;
+    if(tp.hasil>0 && sl.hasil<0){ rr = Math.abs(tp.hasil/sl.hasil); }
+
+    return {
+      lot:lot, lembar:lembar, modalUsed:modalUsed, feeBeli:feeBeliRp, totalModal:totalModal, sisaModal:sisaModal,
+      selisihProfit:(Number(t.tp)||0)-entry, selisihCutLost:(Number(t.sl)||0)-entry,
+      tp:tp, sl:sl, rr:rr
+    };
+  }
+
+  function actualResult(t){
+    var c = calcTrade(t);
+    if(t.status==="tp") return c.tp.hasil;
+    if(t.status==="sl") return c.sl.hasil;
+    if(t.status==="manual" && t.exitPrice!==null && t.exitPrice!==undefined && t.exitPrice!==""){
+      return sellLeg(c.lembar, Number(t.exitPrice)||0, Number(t.feeJual)||0, c.totalModal).hasil;
+    }
+    return null;
+  }
+
+  // ---- tabs ----
+  var tabBtns = document.querySelectorAll(".tab-btn");
+  var panels = { kalkulator: document.getElementById("panel-kalkulator"),
+                 jurnal: document.getElementById("panel-jurnal"),
+                 ringkasan: document.getElementById("panel-ringkasan") };
+  tabBtns.forEach(function(btn){
+    btn.addEventListener("click", function(){
+      tabBtns.forEach(function(b){ b.classList.remove("active"); });
+      btn.classList.add("active");
+      Object.keys(panels).forEach(function(k){ panels[k].classList.remove("active"); });
+      panels[btn.dataset.tab].classList.add("active");
+      if(btn.dataset.tab==="ringkasan") renderRingkasan();
+      if(btn.dataset.tab==="jurnal") renderJurnal();
+    });
+  });
+
+  // ---- calculator form ----
+  var els = {
+    ticker: document.getElementById("in-ticker"),
+    tanggal: document.getElementById("in-tanggal"),
+    modal: document.getElementById("in-modal"),
+    entry: document.getElementById("in-entry"),
+    tp: document.getElementById("in-tp"),
+    sl: document.getElementById("in-sl"),
+    feeBeli: document.getElementById("in-fee-beli"),
+    feeJual: document.getElementById("in-fee-jual")
+  };
+  els.tanggal.value = todayISO();
+  els.feeBeli.value = settings.feeBeli;
+  els.feeJual.value = settings.feeJual;
+
+  function currentFormTrade(){
+    return {
+      ticker: (els.ticker.value||"").trim().toUpperCase(),
+      tanggal: els.tanggal.value || todayISO(),
+      modal: Number(els.modal.value)||0,
+      entry: Number(els.entry.value)||0,
+      tp: Number(els.tp.value)||0,
+      sl: Number(els.sl.value)||0,
+      feeBeli: Number(els.feeBeli.value)||0,
+      feeJual: Number(els.feeJual.value)||0
+    };
+  }
+
+  function renderCalc(){
+    var t = currentFormTrade();
+    var c = calcTrade(t);
+    var quick = document.getElementById("quickStats");
+    var ledger = document.getElementById("resultLedger");
+
+    quick.innerHTML =
+      stat("Jumlah Lot", fmtNum(c.lot), "purple") +
+      stat("Total Lembar", fmtNum(c.lembar), "gold") +
+      stat("Total Modal Terpakai", fmtRp(c.totalModal), "neutral") +
+      stat("Risk : Reward", c.rr!==null ? "1 : "+c.rr.toFixed(2) : "—", "neutral");
+
+    if(c.lembar<=0){
+      ledger.innerHTML = '<div class="empty-state">Isi Modal Trading dan Harga Entry (minimal cukup untuk 1 lot / 100 lembar) untuk melihat proyeksi.</div>';
+      return;
+    }
+
+    ledger.innerHTML =
+      '<div class="ledger-band">' +
+        '<div class="ledger-col tp">' +
+          '<h3>Jika Take Profit</h3>' +
+          kv("Harga TP", fmtNum(t.tp)) +
+          kv("Selisih dari entry", (c.selisihProfit>=0?"+":"")+fmtNum(c.selisihProfit)+" poin") +
+          kv("Nilai jual", fmtRp(c.tp.nilaiJual)) +
+          kv("Fee jual", fmtRp(c.tp.feeJual)) +
+          kvTotal("Estimasi profit", fmtRp(c.tp.hasil) + "  ("+fmtPct(c.tp.pct)+")", "tp") +
+          kv("Modal akhir", fmtRp(c.tp.modalAkhir)) +
+        '</div>' +
+        '<div class="ledger-col sl">' +
+          '<h3>Jika Cut Loss</h3>' +
+          kv("Harga SL", fmtNum(t.sl)) +
+          kv("Selisih dari entry", fmtNum(c.selisihCutLost)+" poin") +
+          kv("Nilai jual", fmtRp(c.sl.nilaiJual)) +
+          kv("Fee jual", fmtRp(c.sl.feeJual)) +
+          kvTotal("Estimasi rugi", fmtRp(c.sl.hasil) + "  ("+fmtPct(c.sl.pct)+")", "sl") +
+          kv("Modal akhir", fmtRp(c.sl.modalAkhir)) +
+        '</div>' +
+      '</div>' +
+      '<div style="padding:14px 18px;border-top:1px solid var(--border);">' +
+        kv("Modal dipakai (harga × lembar)", fmtRp(c.modalUsed)) +
+        kv("Fee beli", fmtRp(c.feeBeli)) +
+        kv("Total modal + fee beli", fmtRp(c.totalModal)) +
+        kv("Sisa modal tidak terpakai", fmtRp(c.sisaModal)) +
+      '</div>';
+  }
+
+  function stat(label, value, cls){
+    return '<div class="stat"><div class="label">'+label+'</div><div class="value '+cls+'">'+value+'</div></div>';
+  }
+  function kv(k,v){
+    return '<div class="kv"><span class="k">'+k+'</span><span class="v">'+v+'</span></div>';
+  }
+  function kvTotal(k,v,side){
+    return '<div class="kv total '+side+'"><span class="k">'+k+'</span><span class="v">'+v+'</span></div>';
+  }
+
+  [els.ticker, els.tanggal, els.modal, els.entry, els.tp, els.sl].forEach(function(el){
+    el.addEventListener("input", renderCalc);
+  });
+  [els.feeBeli, els.feeJual].forEach(function(el){
+    el.addEventListener("input", function(){
+      settings.feeBeli = Number(els.feeBeli.value)||0;
+      settings.feeJual = Number(els.feeJual.value)||0;
+      saveSettings();
+      renderCalc();
+    });
+  });
+
+  document.getElementById("btn-reset-form").addEventListener("click", function(){
+    els.ticker.value=""; els.tanggal.value=todayISO(); els.modal.value=""; els.entry.value=""; els.tp.value=""; els.sl.value="";
+    renderCalc();
+  });
+
+  document.getElementById("btn-save-trade").addEventListener("click", function(){
+    var t = currentFormTrade();
+    if(!t.ticker || !t.modal || !t.entry || !t.tp || !t.sl){
+      alert("Lengkapi Emiten, Modal, Harga Entry, Take Profit, dan Cut Loss terlebih dahulu.");
+      return;
+    }
+    t.id = uid();
+    t.status = "planned";
+    t.exitPrice = null;
+    trades.unshift(t);
+    saveTrades();
+    renderJurnal();
+    tabBtns.forEach(function(b){ b.classList.toggle("active", b.dataset.tab==="jurnal"); });
+    Object.keys(panels).forEach(function(k){ panels[k].classList.toggle("active", k==="jurnal"); });
+  });
+
+  // ---- jurnal ----
+  function renderJurnal(){
+    var body = document.getElementById("jurnalBody");
+    var empty = document.getElementById("jurnalEmpty");
+    var count = document.getElementById("jurnalCount");
+    count.textContent = trades.length + " transaksi";
+
+    if(trades.length===0){
+      body.innerHTML = "";
+      empty.style.display = "block";
+      return;
+    }
+    empty.style.display = "none";
+
+    body.innerHTML = trades.map(function(t){
+      var c = calcTrade(t);
+      var hasil = actualResult(t);
+      var hasilCell = hasil===null ? '<span style="color:var(--text-faint);">—</span>' :
+        '<span style="color:'+(hasil>=0?'var(--profit)':'var(--loss)')+';font-weight:600;">'+fmtRp(hasil)+'</span>';
+
+      return '<tr data-id="'+t.id+'">' +
+        '<td>'+(t.tanggal||"—")+'</td>' +
+        '<td class="ticker-cell">'+t.ticker+'</td>' +
+        '<td class="num">'+fmtRp(t.modal)+'</td>' +
+        '<td class="num">'+fmtNum(t.entry)+'</td>' +
+        '<td class="num">'+fmtNum(t.tp)+'</td>' +
+        '<td class="num">'+fmtNum(t.sl)+'</td>' +
+        '<td class="num">'+fmtNum(c.lot)+'</td>' +
+        '<td>' + statusCell(t) + '</td>' +
+        '<td class="num">'+hasilCell+'</td>' +
+        '<td><button class="icon-btn danger" data-action="delete">Hapus</button></td>' +
+      '</tr>';
+    }).join("");
+
+    body.querySelectorAll('select[data-action="status"]').forEach(function(sel){
+      sel.addEventListener("change", function(){
+        var id = sel.closest("tr").dataset.id;
+        var t = trades.find(function(x){ return x.id===id; });
+        t.status = sel.value;
+        if(t.status!=="manual") t.exitPrice = null;
+        saveTrades();
+        renderJurnal();
+      });
+    });
+    body.querySelectorAll('input[data-action="exit"]').forEach(function(inp){
+      inp.addEventListener("change", function(){
+        var id = inp.closest("tr").dataset.id;
+        var t = trades.find(function(x){ return x.id===id; });
+        t.exitPrice = inp.value;
+        saveTrades();
+        renderJurnal();
+      });
+    });
+    body.querySelectorAll('button[data-action="delete"]').forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var id = btn.closest("tr").dataset.id;
+        if(!confirm("Hapus transaksi ini dari jurnal?")) return;
+        trades = trades.filter(function(x){ return x.id!==id; });
+        saveTrades();
+        renderJurnal();
+      });
+    });
+  }
+
+  function statusCell(t){
+    var opts = [
+      ["planned","Rencana"],
+      ["tp","Take Profit"],
+      ["sl","Cut Loss"],
+      ["manual","Manual"]
+    ];
+    var selectHtml = '<select class="status-select" data-action="status">' +
+      opts.map(function(o){ return '<option value="'+o[0]+'"'+(t.status===o[0]?" selected":"")+'>'+o[1]+'</option>'; }).join("") +
+      '</select>';
+    var pillCls = t.status || "planned";
+    var pillLabel = (opts.find(function(o){return o[0]===t.status;})||opts[0])[1];
+    var extra = "";
+    if(t.status==="manual"){
+      extra = ' <input type="number" class="exit-input" data-action="exit" placeholder="harga exit" value="'+(t.exitPrice||"")+'">';
+    }
+    return '<span class="pill '+pillCls+'">'+pillLabel+'</span><br>' +
+      '<div style="margin-top:6px;">'+selectHtml + extra + '</div>';
+  }
+
+  // ---- ringkasan bulanan ----
+  function monthKey(dateStr){
+    if(!dateStr) return null;
+    return dateStr.slice(0,7); // YYYY-MM
+  }
+  function monthLabel(key){
+    var parts = key.split("-");
+    var d = new Date(Number(parts[0]), Number(parts[1])-1, 1);
+    return d.toLocaleDateString("id-ID", {month:"long", year:"numeric"});
+  }
+
+  function renderRingkasan(){
+    var wrap = document.getElementById("ringkasanContent");
+    var closed = trades.filter(function(t){ return t.status!=="planned"; });
+
+    if(closed.length===0){
+      wrap.innerHTML = '<div class="card"><div class="empty-state">Belum ada transaksi yang ditandai Take Profit / Cut Loss / Manual. Update status di tab Jurnal Transaksi untuk melihat ringkasan bulanan.</div></div>';
+      return;
+    }
+
+    var byMonth = {};
+    closed.forEach(function(t){
+      var key = monthKey(t.tanggal);
+      if(!key) return;
+      var hasil = actualResult(t);
+      if(hasil===null) return;
+      if(!byMonth[key]) byMonth[key] = {profit:0, loss:0, count:0};
+      if(hasil>=0) byMonth[key].profit += hasil; else byMonth[key].loss += hasil;
+      byMonth[key].count += 1;
+    });
+
+    var keys = Object.keys(byMonth).sort();
+    var maxAbs = 1;
+    keys.forEach(function(k){
+      maxAbs = Math.max(maxAbs, byMonth[k].profit, Math.abs(byMonth[k].loss));
+    });
+
+    var html = "";
+    keys.forEach(function(k, idx){
+      var m = byMonth[k];
+      var net = m.profit + m.loss;
+      var prevKey = idx>0 ? keys[idx-1] : null;
+      var deltaHtml = "";
+      if(prevKey){
+        var prevNet = byMonth[prevKey].profit + byMonth[prevKey].loss;
+        if(prevNet!==0){
+          var deltaPct = ((net - prevNet)/Math.abs(prevNet))*100;
+          deltaHtml = '<span class="delta '+(deltaPct>=0?"up":"down")+'">'+(deltaPct>=0?"▲ ":"▼ ")+Math.abs(deltaPct).toFixed(1)+'% vs bulan sebelumnya</span>';
+        }
+      }
+
+      html += '<div class="card month-card">' +
+        '<div class="month-head"><h3>'+monthLabel(k)+'</h3>'+deltaHtml+'</div>' +
+        '<div class="summary-strip" style="border:none;border-radius:0;border-top:1px solid var(--border);margin-bottom:0;">' +
+          stat("Keuntungan", fmtRp(m.profit), "profit") +
+          stat("Kerugian", fmtRp(m.loss), "loss") +
+          stat("Net Profit", fmtRp(net), net>=0?"profit":"loss") +
+          stat("Transaksi Closed", fmtNum(m.count), "neutral") +
+        '</div>' +
+        '<div class="bars">' +
+          barRow("Keuntungan", m.profit, maxAbs, "profit") +
+          barRow("Kerugian", Math.abs(m.loss), maxAbs, "loss") +
+        '</div>' +
+      '</div>';
+    });
+
+    wrap.innerHTML = html;
+  }
+
+  function barRow(label, value, max, cls){
+    var pct = max>0 ? Math.min(100, (value/max)*100) : 0;
+    return '<div class="bar-row">' +
+      '<span class="lbl">'+label+'</span>' +
+      '<div class="bar-track"><div class="bar-fill '+cls+'" style="width:'+pct.toFixed(1)+'%;"></div></div>' +
+      '<span class="val">'+fmtRp(value)+'</span>' +
+    '</div>';
+  }
+
+  // ---- header meta ----
+  document.getElementById("headerMeta").textContent = "Fee default tersimpan otomatis di perangkat ini";
+
+  renderCalc();
+  renderJurnal();
+})();
+</script>
+</body>
+</html>
