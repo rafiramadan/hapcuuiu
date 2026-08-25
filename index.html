@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#F6F7F4;
@@ -94,13 +94,13 @@
   body{
     background:var(--bg);
     color:var(--text);
-    font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    font-family:"Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
     font-size:14px;
     line-height:1.5;
     -webkit-font-smoothing:antialiased;
   }
   h1,h2,h3{
-    font-family:"Sora", ui-sans-serif, system-ui, sans-serif;
+    font-family:"Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
     font-weight:600;
     margin:0;
     text-wrap:balance;
@@ -138,13 +138,35 @@
   .tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:22px;}
   .tab-btn{
     appearance:none;border:none;background:transparent;color:var(--text-muted);
-    font-family:"Sora";font-weight:600;font-size:13px;letter-spacing:0.01em;
+    font-family:"Plus Jakarta Sans";font-weight:600;font-size:13px;letter-spacing:0.01em;
     padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;
     margin-bottom:-1px;transition:color .15s ease, border-color .15s ease;
   }
   .tab-btn:hover{color:var(--text);}
   .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
   .tab-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px;}
+
+  /* mobile bottom tab bar */
+  .mobile-tabbar{display:none;}
+  @media (max-width:700px){
+    .tabs{display:none;}
+    .mobile-tabbar{
+      display:flex;position:fixed;left:0;right:0;bottom:0;z-index:40;
+      background:var(--surface);border-top:1px solid var(--border);
+      padding:8px 4px calc(8px + env(safe-area-inset-bottom));
+      box-shadow:0 -6px 18px -8px rgba(15,25,18,0.18);
+    }
+    .app{padding-bottom:88px;}
+  }
+  .mtab-btn{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+    background:none;border:none;color:var(--text-faint);font-family:"Plus Jakarta Sans";
+    font-size:10.5px;font-weight:600;padding:5px 2px;cursor:pointer;
+    transition:color .15s ease;
+  }
+  .mtab-btn svg{width:22px;height:22px;}
+  .mtab-btn.active{color:var(--accent);}
+  .mtab-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px;}
   .panel{display:none;}
   .panel.active{display:block;}
 
@@ -173,7 +195,7 @@
     background:var(--surface-alt);border:1px solid var(--border);border-radius:6px;
     padding:8px 10px;width:100%;transition:border-color .15s ease, background .15s ease;
   }
-  .field input[type="text"], .field input[type="date"], .field input[type="email"]{font-family:"IBM Plex Sans";}
+  .field input[type="text"], .field input[type="date"], .field input[type="email"]{font-family:"Plus Jakarta Sans";}
   .field input:focus, .field select:focus{
     outline:none;border-color:var(--accent);background:var(--surface);
   }
@@ -184,9 +206,15 @@
 
   .divider{height:1px;background:var(--border);margin:16px 0;}
 
+  .edit-banner{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:var(--warn-soft);color:var(--warn);border-radius:6px;padding:8px 12px;margin-bottom:14px;font-size:12.5px;
+  }
+  .edit-banner strong{font-family:"IBM Plex Mono";}
+
   .btn{
     appearance:none;border:1px solid var(--accent);background:var(--accent);color:var(--accent-contrast);
-    font-family:"Sora";font-weight:600;font-size:13px;border-radius:6px;padding:9px 14px;cursor:pointer;
+    font-family:"Plus Jakarta Sans";font-weight:600;font-size:13px;border-radius:6px;padding:9px 14px;cursor:pointer;
     transition:opacity .15s ease;
   }
   .btn:hover{opacity:0.88;}
@@ -202,13 +230,13 @@
   .account-btn{
     display:flex;align-items:center;gap:10px;width:100%;text-align:left;
     background:var(--surface);color:var(--text);border:1px solid var(--border-strong);
-    font-family:"IBM Plex Sans";font-weight:600;font-size:13.5px;border-radius:6px;padding:10px 12px;cursor:pointer;
+    font-family:"Plus Jakarta Sans";font-weight:600;font-size:13.5px;border-radius:6px;padding:10px 12px;cursor:pointer;
     transition:background .15s ease, border-color .15s ease;
   }
   .account-btn:hover{background:var(--surface-alt);border-color:var(--accent);}
   .account-btn .avatar{
     width:28px;height:28px;border-radius:50%;background:var(--accent-soft);color:var(--accent);
-    display:flex;align-items:center;justify-content:center;font-family:"Sora";font-weight:700;font-size:12px;flex:none;
+    display:flex;align-items:center;justify-content:center;font-family:"Plus Jakarta Sans";font-weight:700;font-size:12px;flex:none;
   }
   .account-btn .addr{font-family:"IBM Plex Mono";font-size:12.5px;color:var(--text);word-break:break-all;}
 
@@ -286,7 +314,7 @@
 
   .icon-btn{
     appearance:none;border:1px solid var(--border);background:var(--surface);color:var(--text-muted);
-    border-radius:5px;padding:4px 8px;font-size:11.5px;cursor:pointer;font-family:"IBM Plex Sans";
+    border-radius:5px;padding:4px 8px;font-size:11.5px;cursor:pointer;font-family:"Plus Jakarta Sans";
   }
   .icon-btn:hover{color:var(--text);border-color:var(--border-strong);}
   .icon-btn.danger:hover{color:var(--loss);border-color:var(--loss);}
@@ -294,7 +322,7 @@
   .empty-state{padding:36px 18px;text-align:center;color:var(--text-faint);font-size:13px;}
 
   select.status-select{
-    font-family:"IBM Plex Sans";font-size:12px;padding:5px 8px;border-radius:5px;
+    font-family:"Plus Jakarta Sans";font-size:12px;padding:5px 8px;border-radius:5px;
     background:var(--surface-alt);border:1px solid var(--border);color:var(--text);
   }
   input.exit-input{width:90px;font-family:"IBM Plex Mono";font-size:12.5px;padding:5px 7px;border-radius:5px;background:var(--surface-alt);border:1px solid var(--border);color:var(--text);}
@@ -367,6 +395,39 @@
       <button class="tab-btn" data-tab="ringkasan" role="tab">Ringkasan Bulanan</button>
     </div>
 
+    <nav class="mobile-tabbar" role="tablist">
+      <button class="mtab-btn active" data-tab="kalkulator" type="button" role="tab">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="5" y="3" width="14" height="18" rx="2"/>
+          <rect x="7.3" y="5.3" width="9.4" height="3.2" rx="0.8" fill="currentColor" stroke="none"/>
+          <circle cx="8.5" cy="13" r="1" fill="currentColor" stroke="none"/>
+          <circle cx="12" cy="13" r="1" fill="currentColor" stroke="none"/>
+          <circle cx="15.5" cy="13" r="1" fill="currentColor" stroke="none"/>
+          <circle cx="8.5" cy="17" r="1" fill="currentColor" stroke="none"/>
+          <circle cx="12" cy="17" r="1" fill="currentColor" stroke="none"/>
+          <circle cx="15.5" cy="17" r="1" fill="currentColor" stroke="none"/>
+        </svg>
+        <span>Kalkulator</span>
+      </button>
+      <button class="mtab-btn" data-tab="jurnal" type="button" role="tab">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="5" y="5" width="14" height="16" rx="2"/>
+          <path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1z" fill="currentColor" stroke="none"/>
+          <line x1="8" y1="10.5" x2="16" y2="10.5"/>
+          <line x1="8" y1="14.5" x2="16" y2="14.5"/>
+          <line x1="8" y1="18" x2="13" y2="18"/>
+        </svg>
+        <span>Jurnal</span>
+      </button>
+      <button class="mtab-btn" data-tab="ringkasan" type="button" role="tab">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="4,17 9,11 13,14 20,6"/>
+          <polyline points="14.5,6 20,6 20,11.5"/>
+        </svg>
+        <span>Ringkasan</span>
+      </button>
+    </nav>
+
     <!-- KALKULATOR -->
     <section class="panel active" id="panel-kalkulator">
       <div class="card" id="aggregateCard" style="margin-bottom:18px; display:none;">
@@ -384,6 +445,10 @@
             <span class="hint">1 lot = 100 lembar</span>
           </div>
           <div class="card-body">
+            <div class="edit-banner" id="editBanner" style="display:none;">
+              <span>Mengedit transaksi <strong id="editBannerTicker"></strong></span>
+              <button type="button" class="icon-btn" id="btnCancelEdit">Batal</button>
+            </div>
             <div class="row2">
               <div class="field">
                 <label for="in-ticker">Emiten</label>
@@ -511,6 +576,7 @@
   var trades = [];
   var activeEmail = localStorage.getItem(ACTIVE_USER_KEY) || null;
   var pinVerified = localStorage.getItem(PIN_OK_KEY) === "1";
+  var editingId = null;
 
   function loadSettings(){
     try{
@@ -643,24 +709,32 @@
     return sb.from("trades").update(dbPatch).eq("id", id);
   }
 
+  function updateTradeFull(id, t){
+    return sb.from("trades").update({
+      ticker: t.ticker, tanggal: t.tanggal, modal: t.modal,
+      entry: t.entry, tp: t.tp, sl: t.sl, fee_beli: t.feeBeli, fee_jual: t.feeJual
+    }).eq("id", id);
+  }
+
   function deleteTradeRow(id){
     return sb.from("trades").delete().eq("id", id);
   }
 
-  // ---- tabs ----
-  var tabBtns = document.querySelectorAll(".tab-btn");
+  // ---- tabs (top tab row on desktop, bottom bar on mobile — kept in sync) ----
+  var tabBtns = document.querySelectorAll(".tab-btn, .mtab-btn");
   var panels = { kalkulator: document.getElementById("panel-kalkulator"),
                  jurnal: document.getElementById("panel-jurnal"),
                  ringkasan: document.getElementById("panel-ringkasan") };
+
+  function activateTab(key){
+    tabBtns.forEach(function(b){ b.classList.toggle("active", b.dataset.tab===key); });
+    Object.keys(panels).forEach(function(k){ panels[k].classList.toggle("active", k===key); });
+    if(key==="ringkasan") renderRingkasan();
+    if(key==="jurnal") renderJurnal();
+  }
+
   tabBtns.forEach(function(btn){
-    btn.addEventListener("click", function(){
-      tabBtns.forEach(function(b){ b.classList.remove("active"); });
-      btn.classList.add("active");
-      Object.keys(panels).forEach(function(k){ panels[k].classList.remove("active"); });
-      panels[btn.dataset.tab].classList.add("active");
-      if(btn.dataset.tab==="ringkasan") renderRingkasan();
-      if(btn.dataset.tab==="jurnal") renderJurnal();
-    });
+    btn.addEventListener("click", function(){ activateTab(btn.dataset.tab); });
   });
 
   // ---- calculator form ----
@@ -759,26 +833,67 @@
     });
   });
 
-  document.getElementById("btn-reset-form").addEventListener("click", function(){
+  var editBanner = document.getElementById("editBanner");
+  var editBannerTicker = document.getElementById("editBannerTicker");
+  var btnSaveTrade = document.getElementById("btn-save-trade");
+
+  function enterEditMode(t){
+    editingId = t.id;
+    els.ticker.value = t.ticker;
+    els.tanggal.value = t.tanggal;
+    els.modal.value = t.modal;
+    els.entry.value = t.entry;
+    els.tp.value = t.tp;
+    els.sl.value = t.sl;
+    els.feeBeli.value = t.feeBeli;
+    els.feeJual.value = t.feeJual;
+    renderCalc();
+    editBannerTicker.textContent = t.ticker;
+    editBanner.style.display = "flex";
+    btnSaveTrade.textContent = "Update Transaksi";
+    activateTab("kalkulator");
+    window.scrollTo(0, 0);
+  }
+
+  function exitEditMode(){
+    editingId = null;
+    editBanner.style.display = "none";
+    btnSaveTrade.textContent = "Simpan ke Jurnal";
+  }
+
+  document.getElementById("btnCancelEdit").addEventListener("click", function(){
+    exitEditMode();
     els.ticker.value=""; els.tanggal.value=todayISO(); els.modal.value=""; els.entry.value=""; els.tp.value=""; els.sl.value="";
     renderCalc();
   });
 
-  document.getElementById("btn-save-trade").addEventListener("click", function(){
+  document.getElementById("btn-reset-form").addEventListener("click", function(){
+    exitEditMode();
+    els.ticker.value=""; els.tanggal.value=todayISO(); els.modal.value=""; els.entry.value=""; els.tp.value=""; els.sl.value="";
+    renderCalc();
+  });
+
+  btnSaveTrade.addEventListener("click", function(){
     var t = currentFormTrade();
     if(!t.ticker || !t.modal || !t.entry || !t.tp || !t.sl){
       alert("Lengkapi Emiten, Modal, Harga Entry, Take Profit, dan Cut Loss terlebih dahulu.");
       return;
     }
-    var btn = document.getElementById("btn-save-trade");
+    var btn = btnSaveTrade;
     btn.disabled = true;
-    insertTrade(t).then(function(res){
+    var savePromise = editingId ? updateTradeFull(editingId, t) : insertTrade(t);
+    savePromise.then(function(res){
       btn.disabled = false;
       if(res.error){ alert("Gagal menyimpan: " + res.error.message); return; }
+      var wasEditing = !!editingId;
+      exitEditMode();
       return fetchTrades().then(function(){
         afterTradesChanged();
-        tabBtns.forEach(function(b){ b.classList.toggle("active", b.dataset.tab==="jurnal"); });
-        Object.keys(panels).forEach(function(k){ panels[k].classList.toggle("active", k==="jurnal"); });
+        if(wasEditing){
+          els.ticker.value=""; els.tanggal.value=todayISO(); els.modal.value=""; els.entry.value=""; els.tp.value=""; els.sl.value="";
+          renderCalc();
+        }
+        activateTab("jurnal");
       });
     });
   });
@@ -847,7 +962,7 @@
         '<td class="num">'+fmtNum(c.lot)+'</td>' +
         '<td>' + statusCell(t) + '</td>' +
         '<td class="num">'+hasilCell+'</td>' +
-        '<td><button class="icon-btn danger" data-action="delete">Hapus</button></td>' +
+        '<td style="white-space:nowrap;"><button class="icon-btn" data-action="edit">Edit</button> <button class="icon-btn danger" data-action="delete">Hapus</button></td>' +
       '</tr>';
 
       cardsHtml += '<div class="jurnal-card" data-id="'+t.id+'">' +
@@ -865,7 +980,8 @@
           jcItem("SL", fmtNum(t.sl)) +
         '</div>' +
         '<div class="jc-controls">' + statusControlsHtml(t) +
-          '<button class="icon-btn danger" data-action="delete" style="margin-left:auto;">Hapus</button>' +
+          '<button class="icon-btn" data-action="edit" style="margin-left:auto;">Edit</button>' +
+          '<button class="icon-btn danger" data-action="delete">Hapus</button>' +
         '</div>' +
       '</div>';
     });
@@ -885,6 +1001,13 @@
           if(res.error){ alert("Gagal update: " + res.error.message); return; }
           return fetchTrades().then(afterTradesChanged);
         });
+      });
+    });
+    root.querySelectorAll('button[data-action="edit"]').forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var id = btn.closest("[data-id]").dataset.id;
+        var t = trades.find(function(x){ return x.id===id; });
+        if(t) enterEditMode(t);
       });
     });
     root.querySelectorAll('input[data-action="exit"]').forEach(function(inp){
