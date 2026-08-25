@@ -301,7 +301,7 @@
   <div id="authGate" class="auth-gate">
     <div class="auth-card">
       <h2>Masuk untuk mulai</h2>
-      <p>Jurnal transaksi Anda disimpan di akun sendiri lewat Supabase &mdash; tanpa password, cukup email.</p>
+      <p>Jurnal transaksi Anda disimpan aman di akun Anda sendiri &mdash; tanpa password, cukup email.</p>
       <form class="auth-form" id="authForm">
         <div class="field" style="margin-bottom:0;">
           <label for="auth-email">Email</label>
@@ -425,7 +425,7 @@
       <div id="ringkasanContent"></div>
     </section>
 
-    <footer>Kalkulasi bersifat estimasi &mdash; harga eksekusi riil dapat berbeda karena slippage &amp; antrian order. Jurnal transaksi tersimpan di akun Supabase Anda.</footer>
+    <footer>Kalkulasi bersifat estimasi &mdash; harga eksekusi riil dapat berbeda karena slippage &amp; antrian order. Jurnal transaksi tersimpan aman di akun Anda.</footer>
   </div>
 </div>
 
@@ -707,7 +707,7 @@
     btn.disabled = true;
     insertTrade(t).then(function(res){
       btn.disabled = false;
-      if(res.error){ alert("Gagal menyimpan ke Supabase: " + res.error.message); return; }
+      if(res.error){ alert("Gagal menyimpan: " + res.error.message); return; }
       return fetchTrades().then(function(){
         renderJurnal();
         tabBtns.forEach(function(b){ b.classList.toggle("active", b.dataset.tab==="jurnal"); });
@@ -893,6 +893,17 @@
   var authMsg = document.getElementById("authMsg");
   var authSubmitBtn = document.getElementById("authSubmitBtn");
 
+  function friendlyAuthError(message){
+    var m = (message||"").toLowerCase();
+    if(m.indexOf("rate limit") !== -1){
+      return "Terlalu banyak percobaan kirim link dalam waktu singkat. Tunggu beberapa menit lalu coba lagi.";
+    }
+    if(m.indexOf("invalid") !== -1 && m.indexOf("email") !== -1){
+      return "Format email tidak valid. Periksa kembali alamat email Anda.";
+    }
+    return "Gagal mengirim link masuk: " + message;
+  }
+
   function setAuthUI(session){
     currentSession = session;
     if(session && session.user){
@@ -926,7 +937,7 @@
       authSubmitBtn.disabled = false;
       authSubmitBtn.textContent = "Kirim Magic Link";
       if(res.error){
-        authMsg.textContent = "Gagal mengirim: " + res.error.message;
+        authMsg.textContent = friendlyAuthError(res.error.message);
         authMsg.className = "auth-msg error";
       } else {
         authMsg.textContent = "Link masuk sudah dikirim ke " + email + ". Cek inbox (atau folder spam), lalu klik link-nya untuk masuk.";
