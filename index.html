@@ -119,6 +119,20 @@
   .brand-text p{margin:2px 0 0;color:var(--text-muted);font-size:12.5px;}
   .header-meta{color:var(--text-faint);font-size:12px;text-align:right;}
 
+  /* auth */
+  .auth-gate{max-width:420px;margin:48px auto;}
+  .auth-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:30px 26px;text-align:center;}
+  .auth-card h2{font-size:17px;margin-bottom:6px;}
+  .auth-card p{color:var(--text-muted);font-size:13px;margin:0 0 20px;line-height:1.5;}
+  .auth-form{display:flex;flex-direction:column;gap:12px;text-align:left;}
+  .auth-msg{margin-top:14px;font-size:12.5px;line-height:1.5;min-height:1em;}
+  .auth-msg.error{color:var(--loss);}
+  .auth-msg.success{color:var(--profit);}
+  .user-badge{display:inline-flex;align-items:center;gap:10px;}
+  .user-badge .email{color:var(--text-muted);font-size:12px;}
+  .app-shell{display:none;}
+  .app-shell.ready{display:block;}
+
   /* tabs */
   .tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:22px;}
   .tab-btn{
@@ -158,7 +172,7 @@
     background:var(--surface-alt);border:1px solid var(--border);border-radius:6px;
     padding:8px 10px;width:100%;transition:border-color .15s ease, background .15s ease;
   }
-  .field input[type="text"], .field input[type="date"]{font-family:"IBM Plex Sans";}
+  .field input[type="text"], .field input[type="date"], .field input[type="email"]{font-family:"IBM Plex Sans";}
   .field input:focus, .field select:focus{
     outline:none;border-color:var(--accent);background:var(--surface);
   }
@@ -175,6 +189,7 @@
     transition:opacity .15s ease;
   }
   .btn:hover{opacity:0.88;}
+  .btn:disabled{opacity:0.6;cursor:default;}
   .btn.secondary{background:transparent;color:var(--accent);}
   .btn.ghost{background:transparent;color:var(--text-muted);border-color:var(--border);}
   .btn.ghost:hover{color:var(--text);border-color:var(--border-strong);}
@@ -265,10 +280,6 @@
   .bar-fill.loss{background:var(--loss);}
   .bar-row .val{font-family:"IBM Plex Mono";font-size:12.5px;text-align:right;font-variant-numeric:tabular-nums;}
 
-  .settings-inline{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;padding:14px 18px;background:var(--surface-alt);border-top:1px solid var(--border);}
-  .settings-inline .field{margin-bottom:0;min-width:120px;}
-  .settings-inline .note{font-size:11.5px;color:var(--text-faint);max-width:260px;line-height:1.4;}
-
   footer{margin-top:30px;color:var(--text-faint);font-size:11.5px;text-align:center;}
 
   @media (prefers-reduced-motion: reduce){*{transition:none !important;}}
@@ -287,131 +298,153 @@
     <div class="header-meta" id="headerMeta"></div>
   </div>
 
-  <div class="tabs" role="tablist">
-    <button class="tab-btn active" data-tab="kalkulator" role="tab">Kalkulator</button>
-    <button class="tab-btn" data-tab="jurnal" role="tab">Jurnal Transaksi</button>
-    <button class="tab-btn" data-tab="ringkasan" role="tab">Ringkasan Bulanan</button>
+  <div id="authGate" class="auth-gate">
+    <div class="auth-card">
+      <h2>Masuk untuk mulai</h2>
+      <p>Jurnal transaksi Anda disimpan di akun sendiri lewat Supabase &mdash; tanpa password, cukup email.</p>
+      <form class="auth-form" id="authForm">
+        <div class="field" style="margin-bottom:0;">
+          <label for="auth-email">Email</label>
+          <input type="email" id="auth-email" placeholder="nama@email.com" required autocomplete="email">
+        </div>
+        <button class="btn" type="submit" id="authSubmitBtn">Kirim Magic Link</button>
+      </form>
+      <div class="auth-msg" id="authMsg"></div>
+    </div>
   </div>
 
-  <!-- KALKULATOR -->
-  <section class="panel active" id="panel-kalkulator">
-    <div class="calc-grid">
+  <div id="appShell" class="app-shell">
+    <div class="tabs" role="tablist">
+      <button class="tab-btn active" data-tab="kalkulator" role="tab">Kalkulator</button>
+      <button class="tab-btn" data-tab="jurnal" role="tab">Jurnal Transaksi</button>
+      <button class="tab-btn" data-tab="ringkasan" role="tab">Ringkasan Bulanan</button>
+    </div>
+
+    <!-- KALKULATOR -->
+    <section class="panel active" id="panel-kalkulator">
+      <div class="calc-grid">
+        <div class="card">
+          <div class="card-header">
+            <h2>Setup Trade</h2>
+            <span class="hint">1 lot = 100 lembar</span>
+          </div>
+          <div class="card-body">
+            <div class="row2">
+              <div class="field">
+                <label for="in-ticker">Emiten</label>
+                <input type="text" id="in-ticker" placeholder="cth. ANTM" maxlength="8" style="text-transform:uppercase;">
+              </div>
+              <div class="field">
+                <label for="in-tanggal">Tanggal</label>
+                <input type="date" id="in-tanggal">
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="in-modal">Modal Trading (Rp)</label>
+              <input type="number" id="in-modal" inputmode="decimal" placeholder="5000000" min="0" step="1000">
+            </div>
+
+            <div class="row2">
+              <div class="field">
+                <label for="in-entry">Harga Entry</label>
+                <input type="number" id="in-entry" inputmode="decimal" placeholder="2780" min="0" step="1">
+              </div>
+              <div class="field">
+                <label for="in-tp">Take Profit</label>
+                <input type="number" id="in-tp" inputmode="decimal" placeholder="2830" min="0" step="1">
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="in-sl">Cut Loss</label>
+              <input type="number" id="in-sl" inputmode="decimal" placeholder="2760" min="0" step="1">
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="row2">
+              <div class="field field-fee">
+                <label for="in-fee-beli">Fee Beli <span class="sub">broker + PPN</span></label>
+                <div class="fee-wrap"><input type="number" id="in-fee-beli" inputmode="decimal" step="0.001" min="0"></div>
+              </div>
+              <div class="field field-fee">
+                <label for="in-fee-jual">Fee Jual <span class="sub">broker + PPh</span></label>
+                <div class="fee-wrap"><input type="number" id="in-fee-jual" inputmode="decimal" step="0.001" min="0"></div>
+              </div>
+            </div>
+
+            <div class="btn-row">
+              <button class="btn" id="btn-save-trade">Simpan ke Jurnal</button>
+              <button class="btn ghost" id="btn-reset-form">Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="summary-strip" id="quickStats"></div>
+          <div class="ledger" id="resultLedger"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- JURNAL -->
+    <section class="panel" id="panel-jurnal">
       <div class="card">
         <div class="card-header">
-          <h2>Setup Trade</h2>
-          <span class="hint">1 lot = 100 lembar</span>
+          <h2>Jurnal Transaksi</h2>
+          <span class="hint" id="jurnalCount"></span>
         </div>
-        <div class="card-body">
-          <div class="row2">
-            <div class="field">
-              <label for="in-ticker">Emiten</label>
-              <input type="text" id="in-ticker" placeholder="cth. ANTM" maxlength="8" style="text-transform:uppercase;">
-            </div>
-            <div class="field">
-              <label for="in-tanggal">Tanggal</label>
-              <input type="date" id="in-tanggal">
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="in-modal">Modal Trading (Rp)</label>
-            <input type="number" id="in-modal" inputmode="decimal" placeholder="5000000" min="0" step="1000">
-          </div>
-
-          <div class="row2">
-            <div class="field">
-              <label for="in-entry">Harga Entry</label>
-              <input type="number" id="in-entry" inputmode="decimal" placeholder="2780" min="0" step="1">
-            </div>
-            <div class="field">
-              <label for="in-tp">Take Profit</label>
-              <input type="number" id="in-tp" inputmode="decimal" placeholder="2830" min="0" step="1">
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="in-sl">Cut Loss</label>
-            <input type="number" id="in-sl" inputmode="decimal" placeholder="2760" min="0" step="1">
-          </div>
-
-          <div class="divider"></div>
-
-          <div class="row2">
-            <div class="field field-fee">
-              <label for="in-fee-beli">Fee Beli <span class="sub">broker + PPN</span></label>
-              <div class="fee-wrap"><input type="number" id="in-fee-beli" inputmode="decimal" step="0.001" min="0"></div>
-            </div>
-            <div class="field field-fee">
-              <label for="in-fee-jual">Fee Jual <span class="sub">broker + PPh</span></label>
-              <div class="fee-wrap"><input type="number" id="in-fee-jual" inputmode="decimal" step="0.001" min="0"></div>
-            </div>
-          </div>
-
-          <div class="btn-row">
-            <button class="btn" id="btn-save-trade">Simpan ke Jurnal</button>
-            <button class="btn ghost" id="btn-reset-form">Reset</button>
-          </div>
+        <div class="table-wrap">
+          <table id="jurnalTable">
+            <thead>
+              <tr>
+                <th>Tanggal</th>
+                <th>Emiten</th>
+                <th style="text-align:right;">Modal</th>
+                <th style="text-align:right;">Entry</th>
+                <th style="text-align:right;">TP</th>
+                <th style="text-align:right;">SL</th>
+                <th style="text-align:right;">Lot</th>
+                <th>Status</th>
+                <th style="text-align:right;">Hasil (Rp)</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="jurnalBody"></tbody>
+          </table>
+        </div>
+        <div class="empty-state" id="jurnalEmpty" style="display:none;">
+          Belum ada transaksi. Hitung setup di tab Kalkulator lalu klik "Simpan ke Jurnal".
         </div>
       </div>
+    </section>
 
-      <div>
-        <div class="summary-strip" id="quickStats"></div>
-        <div class="ledger" id="resultLedger"></div>
-      </div>
-    </div>
-  </section>
+    <!-- RINGKASAN -->
+    <section class="panel" id="panel-ringkasan">
+      <div id="ringkasanContent"></div>
+    </section>
 
-  <!-- JURNAL -->
-  <section class="panel" id="panel-jurnal">
-    <div class="card">
-      <div class="card-header">
-        <h2>Jurnal Transaksi</h2>
-        <span class="hint" id="jurnalCount"></span>
-      </div>
-      <div class="table-wrap">
-        <table id="jurnalTable">
-          <thead>
-            <tr>
-              <th>Tanggal</th>
-              <th>Emiten</th>
-              <th style="text-align:right;">Modal</th>
-              <th style="text-align:right;">Entry</th>
-              <th style="text-align:right;">TP</th>
-              <th style="text-align:right;">SL</th>
-              <th style="text-align:right;">Lot</th>
-              <th>Status</th>
-              <th style="text-align:right;">Hasil (Rp)</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="jurnalBody"></tbody>
-        </table>
-      </div>
-      <div class="empty-state" id="jurnalEmpty" style="display:none;">
-        Belum ada transaksi. Hitung setup di tab Kalkulator lalu klik "Simpan ke Jurnal".
-      </div>
-    </div>
-  </section>
-
-  <!-- RINGKASAN -->
-  <section class="panel" id="panel-ringkasan">
-    <div id="ringkasanContent"></div>
-  </section>
-
-  <footer>Kalkulasi bersifat estimasi &mdash; harga eksekusi riil dapat berbeda karena slippage &amp; antrian order. Data tersimpan lokal di browser Anda.</footer>
+    <footer>Kalkulasi bersifat estimasi &mdash; harga eksekusi riil dapat berbeda karena slippage &amp; antrian order. Jurnal transaksi tersimpan di akun Supabase Anda.</footer>
+  </div>
 </div>
 
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script>
 (function(){
   "use strict";
 
   var LOT_SIZE = 100;
-  var STORAGE_KEY = "ledgersaham_trades_v1";
-  var SETTINGS_KEY = "ledgersaham_settings_v1";
+  var SETTINGS_KEY = "hapcuuiu_settings_v1";
+  var SUPABASE_URL = "https://sqqsxuscybmncesuwvyd.supabase.co";
+  var SUPABASE_ANON_KEY = "sb_publishable_5bpdlW1VtGQbAxC0oE3hBA__JYla7oM";
+
+  var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   var defaultSettings = { feeBeli: 0.15, feeJual: 0.25 };
   var settings = loadSettings();
-  var trades = loadTrades();
+  var trades = [];
+  var currentSession = null;
 
   function loadSettings(){
     try{
@@ -422,16 +455,6 @@
     }catch(e){ return Object.assign({}, defaultSettings); }
   }
   function saveSettings(){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
-
-  function loadTrades(){
-    try{
-      var raw = localStorage.getItem(STORAGE_KEY);
-      if(!raw) return [];
-      var parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
-    }catch(e){ return []; }
-  }
-  function saveTrades(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(trades)); }
 
   function fmtRp(n){
     if(n===null||n===undefined||isNaN(n)) return "—";
@@ -452,9 +475,13 @@
     var d = new Date(Date.now());
     return d.toISOString().slice(0,10);
   }
-  function uid(){ return "t" + Math.random().toString(36).slice(2,10); }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
 
-  // ---- core calculation ----
+  // ---- core calculation (pure, unchanged by storage backend) ----
   function calcLot(modal, entry, feeBeliPct){
     if(!modal || !entry || entry<=0 || modal<=0) return {lot:0, lembar:0};
     var costPerLot = entry * LOT_SIZE * (1 + feeBeliPct/100);
@@ -503,6 +530,54 @@
       return sellLeg(c.lembar, Number(t.exitPrice)||0, Number(t.feeJual)||0, c.totalModal).hasil;
     }
     return null;
+  }
+
+  // ---- Supabase: trades table ----
+  function dbToTrade(row){
+    return {
+      id: row.id,
+      ticker: row.ticker,
+      tanggal: row.tanggal,
+      modal: Number(row.modal),
+      entry: Number(row.entry),
+      tp: Number(row.tp),
+      sl: Number(row.sl),
+      feeBeli: Number(row.fee_beli),
+      feeJual: Number(row.fee_jual),
+      status: row.status,
+      exitPrice: (row.exit_price===null || row.exit_price===undefined) ? null : Number(row.exit_price)
+    };
+  }
+
+  function fetchTrades(){
+    return sb.from("trades").select("*")
+      .order("tanggal", {ascending:false})
+      .order("created_at", {ascending:false})
+      .then(function(res){
+        if(res.error){ console.error(res.error); return res; }
+        trades = (res.data||[]).map(dbToTrade);
+        return res;
+      });
+  }
+
+  function insertTrade(t){
+    var userId = currentSession && currentSession.user ? currentSession.user.id : null;
+    if(!userId) return Promise.resolve({ error:{ message:"Belum login" } });
+    return sb.from("trades").insert({
+      user_id: userId, ticker: t.ticker, tanggal: t.tanggal, modal: t.modal,
+      entry: t.entry, tp: t.tp, sl: t.sl, fee_beli: t.feeBeli, fee_jual: t.feeJual, status:"planned"
+    });
+  }
+
+  function updateTradeRow(id, patch){
+    var dbPatch = {};
+    if("status" in patch) dbPatch.status = patch.status;
+    if("exitPrice" in patch) dbPatch.exit_price = (patch.exitPrice===""||patch.exitPrice===undefined) ? null : patch.exitPrice;
+    return sb.from("trades").update(dbPatch).eq("id", id);
+  }
+
+  function deleteTradeRow(id){
+    return sb.from("trades").delete().eq("id", id);
   }
 
   // ---- tabs ----
@@ -628,14 +703,17 @@
       alert("Lengkapi Emiten, Modal, Harga Entry, Take Profit, dan Cut Loss terlebih dahulu.");
       return;
     }
-    t.id = uid();
-    t.status = "planned";
-    t.exitPrice = null;
-    trades.unshift(t);
-    saveTrades();
-    renderJurnal();
-    tabBtns.forEach(function(b){ b.classList.toggle("active", b.dataset.tab==="jurnal"); });
-    Object.keys(panels).forEach(function(k){ panels[k].classList.toggle("active", k==="jurnal"); });
+    var btn = document.getElementById("btn-save-trade");
+    btn.disabled = true;
+    insertTrade(t).then(function(res){
+      btn.disabled = false;
+      if(res.error){ alert("Gagal menyimpan ke Supabase: " + res.error.message); return; }
+      return fetchTrades().then(function(){
+        renderJurnal();
+        tabBtns.forEach(function(b){ b.classList.toggle("active", b.dataset.tab==="jurnal"); });
+        Object.keys(panels).forEach(function(k){ panels[k].classList.toggle("active", k==="jurnal"); });
+      });
+    });
   });
 
   // ---- jurnal ----
@@ -660,7 +738,7 @@
 
       return '<tr data-id="'+t.id+'">' +
         '<td>'+(t.tanggal||"—")+'</td>' +
-        '<td class="ticker-cell">'+t.ticker+'</td>' +
+        '<td class="ticker-cell">'+escapeHtml(t.ticker)+'</td>' +
         '<td class="num">'+fmtRp(t.modal)+'</td>' +
         '<td class="num">'+fmtNum(t.entry)+'</td>' +
         '<td class="num">'+fmtNum(t.tp)+'</td>' +
@@ -675,29 +753,36 @@
     body.querySelectorAll('select[data-action="status"]').forEach(function(sel){
       sel.addEventListener("change", function(){
         var id = sel.closest("tr").dataset.id;
-        var t = trades.find(function(x){ return x.id===id; });
-        t.status = sel.value;
-        if(t.status!=="manual") t.exitPrice = null;
-        saveTrades();
-        renderJurnal();
+        var newStatus = sel.value;
+        var patch = { status: newStatus };
+        if(newStatus !== "manual") patch.exitPrice = null;
+        sel.disabled = true;
+        updateTradeRow(id, patch).then(function(res){
+          sel.disabled = false;
+          if(res.error){ alert("Gagal update: " + res.error.message); return; }
+          return fetchTrades().then(renderJurnal);
+        });
       });
     });
     body.querySelectorAll('input[data-action="exit"]').forEach(function(inp){
       inp.addEventListener("change", function(){
         var id = inp.closest("tr").dataset.id;
-        var t = trades.find(function(x){ return x.id===id; });
-        t.exitPrice = inp.value;
-        saveTrades();
-        renderJurnal();
+        var val = inp.value==="" ? null : Number(inp.value);
+        updateTradeRow(id, { exitPrice: val }).then(function(res){
+          if(res.error){ alert("Gagal update: " + res.error.message); return; }
+          return fetchTrades().then(renderJurnal);
+        });
       });
     });
     body.querySelectorAll('button[data-action="delete"]').forEach(function(btn){
       btn.addEventListener("click", function(){
         var id = btn.closest("tr").dataset.id;
         if(!confirm("Hapus transaksi ini dari jurnal?")) return;
-        trades = trades.filter(function(x){ return x.id!==id; });
-        saveTrades();
-        renderJurnal();
+        btn.disabled = true;
+        deleteTradeRow(id).then(function(res){
+          if(res.error){ btn.disabled = false; alert("Gagal hapus: " + res.error.message); return; }
+          return fetchTrades().then(renderJurnal);
+        });
       });
     });
   }
@@ -800,11 +885,68 @@
     '</div>';
   }
 
-  // ---- header meta ----
-  document.getElementById("headerMeta").textContent = "Fee default tersimpan otomatis di perangkat ini";
+  // ---- auth (Supabase, email magic link) ----
+  var authGate = document.getElementById("authGate");
+  var appShell = document.getElementById("appShell");
+  var headerMeta = document.getElementById("headerMeta");
+  var authForm = document.getElementById("authForm");
+  var authMsg = document.getElementById("authMsg");
+  var authSubmitBtn = document.getElementById("authSubmitBtn");
+
+  function setAuthUI(session){
+    currentSession = session;
+    if(session && session.user){
+      authGate.style.display = "none";
+      appShell.classList.add("ready");
+      headerMeta.innerHTML = '<span class="user-badge"><span class="email">'+escapeHtml(session.user.email)+'</span>' +
+        '<button class="icon-btn" id="btnLogout">Keluar</button></span>';
+      document.getElementById("btnLogout").addEventListener("click", function(){
+        sb.auth.signOut();
+      });
+    } else {
+      authGate.style.display = "block";
+      appShell.classList.remove("ready");
+      headerMeta.innerHTML = "";
+      trades = [];
+    }
+  }
+
+  authForm.addEventListener("submit", function(e){
+    e.preventDefault();
+    var email = document.getElementById("auth-email").value.trim();
+    if(!email) return;
+    authSubmitBtn.disabled = true;
+    authSubmitBtn.textContent = "Mengirim...";
+    authMsg.textContent = "";
+    authMsg.className = "auth-msg";
+    sb.auth.signInWithOtp({
+      email: email,
+      options: { emailRedirectTo: window.location.origin + window.location.pathname }
+    }).then(function(res){
+      authSubmitBtn.disabled = false;
+      authSubmitBtn.textContent = "Kirim Magic Link";
+      if(res.error){
+        authMsg.textContent = "Gagal mengirim: " + res.error.message;
+        authMsg.className = "auth-msg error";
+      } else {
+        authMsg.textContent = "Link masuk sudah dikirim ke " + email + ". Cek inbox (atau folder spam), lalu klik link-nya untuk masuk.";
+        authMsg.className = "auth-msg success";
+      }
+    });
+  });
+
+  sb.auth.onAuthStateChange(function(_event, session){
+    setAuthUI(session);
+    if(session && session.user){
+      fetchTrades().then(function(){
+        renderJurnal();
+        var ringkasanTab = document.querySelector('.tab-btn[data-tab="ringkasan"]');
+        if(ringkasanTab && ringkasanTab.classList.contains("active")) renderRingkasan();
+      });
+    }
+  });
 
   renderCalc();
-  renderJurnal();
 })();
 </script>
 </body>
