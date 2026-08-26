@@ -19,11 +19,11 @@
     --text:#182019;
     --text-muted:#5B685F;
     --text-faint:#8B9789;
-    --accent:#167F45;
-    --accent-soft:#E5F2EA;
+    --accent:#0EA968;
+    --accent-soft:#E1F7EA;
     --accent-contrast:#FFFFFF;
-    --profit:#1E9455;
-    --profit-soft:#E1F5E7;
+    --profit:#12B872;
+    --profit-soft:#E1F7EA;
     --loss:#D9392B;
     --loss-soft:#FBEAE7;
     --warn:#8A6425;
@@ -46,11 +46,11 @@
       --text:#E8ECE7;
       --text-muted:#9CA9A1;
       --text-faint:#6C7A72;
-      --accent:#3FBE7C;
-      --accent-soft:#1B3324;
+      --accent:#3ED991;
+      --accent-soft:#123527;
       --accent-contrast:#0B2016;
-      --profit:#3FCB8C;
-      --profit-soft:#173328;
+      --profit:#3ED991;
+      --profit-soft:#123527;
       --loss:#FF7A66;
       --loss-soft:#3A2220;
       --warn:#E0AC4E;
@@ -72,11 +72,11 @@
     --text:#E8ECE7;
     --text-muted:#9CA9A1;
     --text-faint:#6C7A72;
-    --accent:#3FBE7C;
-    --accent-soft:#1B3324;
+    --accent:#3ED991;
+    --accent-soft:#123527;
     --accent-contrast:#0B2016;
-    --profit:#3FCB8C;
-    --profit-soft:#173328;
+    --profit:#3ED991;
+    --profit-soft:#123527;
     --loss:#FF7A66;
     --loss-soft:#3A2220;
     --warn:#E0AC4E;
@@ -200,6 +200,13 @@
     outline:none;border-color:var(--accent);background:var(--surface);
   }
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+  .filter-panel{padding:16px 18px;background:var(--surface-alt);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+  .filter-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:14px;}
+  .filter-grid .field{margin-bottom:0;}
+  .range-pair{display:flex;align-items:center;gap:6px;}
+  .range-pair input{min-width:0;}
+  .range-pair span{color:var(--text-faint);font-size:12px;flex:none;}
   .field-fee input{padding-right:26px;}
   .fee-wrap{position:relative;}
   .fee-wrap::after{content:"%";position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--text-faint);font-size:12px;font-family:"IBM Plex Mono";pointer-events:none;}
@@ -358,8 +365,8 @@
     <div class="brand">
       <div class="brand-mark" aria-hidden="true">
         <svg width="22" height="22" viewBox="0 0 24 24">
-          <line x1="7" y1="4" x2="7" y2="20" stroke="#1E9455" stroke-width="2.2" stroke-linecap="round"/>
-          <rect x="3.5" y="11" width="7" height="9" rx="1.6" fill="#1E9455"/>
+          <line x1="7" y1="4" x2="7" y2="20" stroke="#12B872" stroke-width="2.2" stroke-linecap="round"/>
+          <rect x="3.5" y="11" width="7" height="9" rx="1.6" fill="#12B872"/>
           <line x1="17" y1="2" x2="17" y2="15" stroke="#D9392B" stroke-width="2.2" stroke-linecap="round"/>
           <rect x="13.5" y="5" width="7" height="6" rx="1.6" fill="#D9392B"/>
         </svg>
@@ -517,7 +524,88 @@
       <div class="card">
         <div class="card-header">
           <h2>Jurnal Transaksi</h2>
-          <span class="hint" id="jurnalCount"></span>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span class="hint" id="jurnalCount"></span>
+            <button class="icon-btn" id="btnToggleFilter" type="button">Filter</button>
+          </div>
+        </div>
+        <div class="filter-panel" id="filterPanel" style="display:none;">
+          <div class="filter-grid">
+            <div class="field">
+              <label>Tanggal</label>
+              <div class="range-pair">
+                <input type="date" id="f-tgl-dari">
+                <span>&ndash;</span>
+                <input type="date" id="f-tgl-sampai">
+              </div>
+            </div>
+            <div class="field">
+              <label>Emiten</label>
+              <input type="text" id="f-ticker" placeholder="cth. ANTM" style="text-transform:uppercase;">
+            </div>
+            <div class="field">
+              <label>Status</label>
+              <select id="f-status">
+                <option value="">Semua Status</option>
+                <option value="planned">Rencana</option>
+                <option value="bought">Sudah Dibeli</option>
+                <option value="tp">Take Profit</option>
+                <option value="sl">Cut Loss</option>
+                <option value="manual">Manual</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Modal (Rp)</label>
+              <div class="range-pair">
+                <input type="number" id="f-modal-min" placeholder="Min">
+                <span>&ndash;</span>
+                <input type="number" id="f-modal-max" placeholder="Maks">
+              </div>
+            </div>
+            <div class="field">
+              <label>Entry</label>
+              <div class="range-pair">
+                <input type="number" id="f-entry-min" placeholder="Min">
+                <span>&ndash;</span>
+                <input type="number" id="f-entry-max" placeholder="Maks">
+              </div>
+            </div>
+            <div class="field">
+              <label>Take Profit</label>
+              <div class="range-pair">
+                <input type="number" id="f-tp-min" placeholder="Min">
+                <span>&ndash;</span>
+                <input type="number" id="f-tp-max" placeholder="Maks">
+              </div>
+            </div>
+            <div class="field">
+              <label>Cut Loss</label>
+              <div class="range-pair">
+                <input type="number" id="f-sl-min" placeholder="Min">
+                <span>&ndash;</span>
+                <input type="number" id="f-sl-max" placeholder="Maks">
+              </div>
+            </div>
+            <div class="field">
+              <label>Lot</label>
+              <div class="range-pair">
+                <input type="number" id="f-lot-min" placeholder="Min">
+                <span>&ndash;</span>
+                <input type="number" id="f-lot-max" placeholder="Maks">
+              </div>
+            </div>
+            <div class="field">
+              <label>Hasil (Rp)</label>
+              <div class="range-pair">
+                <input type="number" id="f-hasil-min" placeholder="Min">
+                <span>&ndash;</span>
+                <input type="number" id="f-hasil-max" placeholder="Maks">
+              </div>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn ghost" id="btnResetFilter" type="button">Reset Filter</button>
+          </div>
         </div>
         <div id="jurnalListRoot">
           <div class="table-wrap desktop-only">
@@ -596,7 +684,7 @@
     if(n===null||n===undefined||isNaN(n)) return "—";
     var neg = n < 0;
     var abs = Math.abs(n);
-    var s = abs.toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2});
+    var s = Math.round(abs).toLocaleString("en-US", {minimumFractionDigits:0, maximumFractionDigits:0});
     return (neg?"-":"") + "Rp" + s;
   }
   function fmtNum(n, dec){
@@ -940,24 +1028,118 @@
     '</div>';
   }
 
+  // ---- filter jurnal ----
+  function parseNum(v){ return (v===""||v===undefined||v===null) ? null : Number(v); }
+
+  var filterEls = {
+    tglDari: document.getElementById("f-tgl-dari"),
+    tglSampai: document.getElementById("f-tgl-sampai"),
+    ticker: document.getElementById("f-ticker"),
+    status: document.getElementById("f-status"),
+    modalMin: document.getElementById("f-modal-min"),
+    modalMax: document.getElementById("f-modal-max"),
+    entryMin: document.getElementById("f-entry-min"),
+    entryMax: document.getElementById("f-entry-max"),
+    tpMin: document.getElementById("f-tp-min"),
+    tpMax: document.getElementById("f-tp-max"),
+    slMin: document.getElementById("f-sl-min"),
+    slMax: document.getElementById("f-sl-max"),
+    lotMin: document.getElementById("f-lot-min"),
+    lotMax: document.getElementById("f-lot-max"),
+    hasilMin: document.getElementById("f-hasil-min"),
+    hasilMax: document.getElementById("f-hasil-max")
+  };
+
+  function applyFilters(list){
+    var tglDari = filterEls.tglDari.value;
+    var tglSampai = filterEls.tglSampai.value;
+    var ticker = filterEls.ticker.value.trim().toUpperCase();
+    var status = filterEls.status.value;
+    var modalMin = parseNum(filterEls.modalMin.value), modalMax = parseNum(filterEls.modalMax.value);
+    var entryMin = parseNum(filterEls.entryMin.value), entryMax = parseNum(filterEls.entryMax.value);
+    var tpMin = parseNum(filterEls.tpMin.value), tpMax = parseNum(filterEls.tpMax.value);
+    var slMin = parseNum(filterEls.slMin.value), slMax = parseNum(filterEls.slMax.value);
+    var lotMin = parseNum(filterEls.lotMin.value), lotMax = parseNum(filterEls.lotMax.value);
+    var hasilMin = parseNum(filterEls.hasilMin.value), hasilMax = parseNum(filterEls.hasilMax.value);
+
+    return list.filter(function(t){
+      if(tglDari && t.tanggal < tglDari) return false;
+      if(tglSampai && t.tanggal > tglSampai) return false;
+      if(ticker && (t.ticker||"").toUpperCase().indexOf(ticker)===-1) return false;
+      if(status && t.status !== status) return false;
+      if(modalMin!==null && t.modal < modalMin) return false;
+      if(modalMax!==null && t.modal > modalMax) return false;
+      if(entryMin!==null && t.entry < entryMin) return false;
+      if(entryMax!==null && t.entry > entryMax) return false;
+      if(tpMin!==null && t.tp < tpMin) return false;
+      if(tpMax!==null && t.tp > tpMax) return false;
+      if(slMin!==null && t.sl < slMin) return false;
+      if(slMax!==null && t.sl > slMax) return false;
+      if(lotMin!==null || lotMax!==null){
+        var lot = calcTrade(t).lot;
+        if(lotMin!==null && lot < lotMin) return false;
+        if(lotMax!==null && lot > lotMax) return false;
+      }
+      if(hasilMin!==null || hasilMax!==null){
+        var hasil = actualResult(t);
+        if(hasil===null) return false;
+        if(hasilMin!==null && hasil < hasilMin) return false;
+        if(hasilMax!==null && hasil > hasilMax) return false;
+      }
+      return true;
+    });
+  }
+
+  document.getElementById("btnToggleFilter").addEventListener("click", function(){
+    var panel = document.getElementById("filterPanel");
+    var showing = panel.style.display !== "none";
+    panel.style.display = showing ? "none" : "block";
+    this.textContent = showing ? "Filter" : "Tutup Filter";
+  });
+
+  document.getElementById("btnResetFilter").addEventListener("click", function(){
+    Object.keys(filterEls).forEach(function(k){ filterEls[k].value = ""; });
+    renderJurnal();
+  });
+
+  Object.keys(filterEls).forEach(function(k){
+    filterEls[k].addEventListener("input", renderJurnal);
+    filterEls[k].addEventListener("change", renderJurnal);
+  });
+
   function renderJurnal(){
     var body = document.getElementById("jurnalBody");
     var cards = document.getElementById("jurnalCards");
     var empty = document.getElementById("jurnalEmpty");
     var count = document.getElementById("jurnalCount");
     var root = document.getElementById("jurnalListRoot");
-    count.textContent = trades.length + " transaksi";
 
     if(trades.length===0){
+      count.textContent = "0 transaksi";
       body.innerHTML = "";
       cards.innerHTML = "";
+      root.style.display = "none";
       empty.style.display = "block";
+      empty.textContent = 'Belum ada transaksi. Hitung setup di tab Kalkulator lalu klik "Simpan ke Jurnal".';
       return;
     }
+
+    var list = applyFilters(trades);
+    count.textContent = list.length===trades.length ? (trades.length + " transaksi") : (list.length + " dari " + trades.length + " transaksi");
+
+    if(list.length===0){
+      body.innerHTML = "";
+      cards.innerHTML = "";
+      root.style.display = "none";
+      empty.style.display = "block";
+      empty.textContent = "Tidak ada transaksi yang cocok dengan filter.";
+      return;
+    }
+    root.style.display = "";
     empty.style.display = "none";
 
     var rowsHtml = "", cardsHtml = "";
-    trades.forEach(function(t){
+    list.forEach(function(t){
       var c = calcTrade(t);
       var d = actualResultDetail(t);
       var hasil = d ? d.hasil : null;
