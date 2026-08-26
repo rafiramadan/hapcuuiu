@@ -304,10 +304,14 @@
   .jc-val{font-family:"IBM Plex Mono";font-size:13px;font-variant-numeric:tabular-nums;}
   .jc-val.profit{color:var(--profit);font-weight:600;}
   .jc-val.loss{color:var(--loss);font-weight:600;}
+  .jc-pct{font-family:"IBM Plex Mono";font-size:11px;font-variant-numeric:tabular-nums;color:var(--text-faint);}
+  .jc-pct.profit{color:var(--profit);}
+  .jc-pct.loss{color:var(--loss);}
   .jc-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:10px;border-top:1px dashed var(--border);}
 
   .pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px;text-transform:uppercase;letter-spacing:0.03em;}
   .pill.planned{background:var(--warn-soft);color:var(--warn);}
+  .pill.bought{background:var(--cat-purple-soft);color:var(--cat-purple);}
   .pill.tp{background:var(--profit-soft);color:var(--profit);}
   .pill.sl{background:var(--loss-soft);color:var(--loss);}
   .pill.manual{background:var(--accent-soft);color:var(--accent);}
@@ -528,7 +532,7 @@
                   <th style="text-align:right;">SL</th>
                   <th style="text-align:right;">Lot</th>
                   <th>Status</th>
-                  <th style="text-align:right;">Hasil (Rp)</th>
+                  <th style="text-align:right;">Hasil</th>
                   <th></th>
                 </tr>
               </thead>
@@ -654,14 +658,19 @@
     };
   }
 
-  function actualResult(t){
+  function actualResultDetail(t){
     var c = calcTrade(t);
-    if(t.status==="tp") return c.tp.hasil;
-    if(t.status==="sl") return c.sl.hasil;
+    if(t.status==="tp") return c.tp;
+    if(t.status==="sl") return c.sl;
     if(t.status==="manual" && t.exitPrice!==null && t.exitPrice!==undefined && t.exitPrice!==""){
-      return sellLeg(c.lembar, Number(t.exitPrice)||0, Number(t.feeJual)||0, c.totalModal).hasil;
+      return sellLeg(c.lembar, Number(t.exitPrice)||0, Number(t.feeJual)||0, c.totalModal);
     }
     return null;
+  }
+
+  function actualResult(t){
+    var d = actualResultDetail(t);
+    return d ? d.hasil : null;
   }
 
   // ---- Supabase: trades table ----
@@ -901,10 +910,12 @@
   // ---- jurnal ----
   var STATUS_OPTS = [
     ["planned","Rencana"],
+    ["bought","Sudah Dibeli"],
     ["tp","Take Profit"],
     ["sl","Cut Loss"],
     ["manual","Manual"]
   ];
+  var CLOSED_STATUSES = ["tp","sl","manual"];
   function statusLabel(status){
     return (STATUS_OPTS.find(function(o){ return o[0]===status; }) || STATUS_OPTS[0])[1];
   }
@@ -922,9 +933,11 @@
     return '<span class="pill '+(t.status||"planned")+'">'+statusLabel(t.status)+'</span><br>' +
       '<div style="margin-top:6px;">'+statusControlsHtml(t)+'</div>';
   }
-  function jcItem(label, value, extraCls, wide){
-    return '<div class="jc-item'+(wide?" wide":"")+'"><span class="jc-label">'+label+'</span>' +
-      '<span class="jc-val'+(extraCls?" "+extraCls:"")+'">'+value+'</span></div>';
+  function jcItem(label, value, extraCls, subText){
+    return '<div class="jc-item"><span class="jc-label">'+label+'</span>' +
+      '<span class="jc-val'+(extraCls?" "+extraCls:"")+'">'+value+'</span>' +
+      (subText ? '<span class="jc-pct'+(extraCls?" "+extraCls:"")+'">'+subText+'</span>' : '') +
+    '</div>';
   }
 
   function renderJurnal(){
@@ -946,11 +959,14 @@
     var rowsHtml = "", cardsHtml = "";
     trades.forEach(function(t){
       var c = calcTrade(t);
-      var hasil = actualResult(t);
+      var d = actualResultDetail(t);
+      var hasil = d ? d.hasil : null;
       var hasilCls = hasil===null ? "" : (hasil>=0 ? "profit" : "loss");
       var hasilText = hasil===null ? "—" : fmtRp(hasil);
+      var pctText = (d && d.pct!==null) ? fmtPct(d.pct) : null;
       var hasilCell = hasil===null ? '<span style="color:var(--text-faint);">—</span>' :
-        '<span style="color:'+(hasil>=0?'var(--profit)':'var(--loss)')+';font-weight:600;">'+hasilText+'</span>';
+        '<span style="color:'+(hasil>=0?'var(--profit)':'var(--loss)')+';font-weight:600;">'+hasilText +
+        (pctText? ' <span class="mono" style="font-weight:500;font-size:11.5px;">('+pctText+')</span>' : '') + '</span>';
 
       rowsHtml += '<tr data-id="'+t.id+'">' +
         '<td>'+(t.tanggal||"—")+'</td>' +
@@ -975,7 +991,7 @@
           jcItem("Modal", fmtRp(t.modal)) +
           jcItem("Lot", fmtNum(c.lot)) +
           jcItem("Entry", fmtNum(t.entry)) +
-          jcItem("Hasil", hasilText, hasilCls) +
+          jcItem("Hasil", hasilText, hasilCls, pctText) +
           jcItem("TP", fmtNum(t.tp)) +
           jcItem("SL", fmtNum(t.sl)) +
         '</div>' +
@@ -1037,7 +1053,7 @@
   function renderAggregateSummary(){
     var card = document.getElementById("aggregateCard");
     var statsEl = document.getElementById("aggregateStats");
-    var closed = trades.filter(function(t){ return t.status!=="planned"; });
+    var closed = trades.filter(function(t){ return CLOSED_STATUSES.indexOf(t.status) !== -1; });
     var profit = 0, loss = 0, closedCount = 0;
     closed.forEach(function(t){
       var hasil = actualResult(t);
@@ -1075,7 +1091,7 @@
 
   function renderRingkasan(){
     var wrap = document.getElementById("ringkasanContent");
-    var closed = trades.filter(function(t){ return t.status!=="planned"; });
+    var closed = trades.filter(function(t){ return CLOSED_STATUSES.indexOf(t.status) !== -1; });
 
     if(closed.length===0){
       wrap.innerHTML = '<div class="card"><div class="empty-state">Belum ada transaksi yang ditandai Take Profit / Cut Loss / Manual. Update status di tab Jurnal Transaksi untuk melihat ringkasan bulanan.</div></div>';
