@@ -200,6 +200,7 @@
     outline:none;border-color:var(--accent);background:var(--surface);
   }
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .row2.single-col{grid-template-columns:1fr;}
 
   .filter-panel{padding:16px 18px;background:var(--surface-alt);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
   .filter-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:14px;}
@@ -493,18 +494,18 @@
               <input type="number" id="in-modal" inputmode="decimal" placeholder="5000000" min="0" step="1000">
             </div>
 
-            <div id="sahamFields">
-              <div class="row2">
-                <div class="field">
-                  <label for="in-entry">Harga Entry</label>
-                  <input type="number" id="in-entry" inputmode="decimal" placeholder="2780" min="0" step="1">
-                </div>
-                <div class="field">
-                  <label for="in-tp">Take Profit</label>
-                  <input type="number" id="in-tp" inputmode="decimal" placeholder="2830" min="0" step="1">
-                </div>
+            <div class="row2" id="entryTpRow">
+              <div class="field" id="fieldEntry">
+                <label for="in-entry">Harga Entry</label>
+                <input type="number" id="in-entry" inputmode="decimal" placeholder="2780" min="0" step="1">
               </div>
+              <div class="field">
+                <label for="in-tp" id="labelTp">Take Profit</label>
+                <input type="number" id="in-tp" inputmode="decimal" placeholder="2830" min="0" step="1">
+              </div>
+            </div>
 
+            <div id="sahamFields">
               <div class="field">
                 <label for="in-sl">Cut Loss</label>
                 <input type="number" id="in-sl" inputmode="decimal" placeholder="2760" min="0" step="1">
@@ -894,8 +895,11 @@
 
   var currentAssetType = "saham";
   var sahamFieldsEl = document.getElementById("sahamFields");
+  var fieldEntry = document.getElementById("fieldEntry");
+  var entryTpRow = document.getElementById("entryTpRow");
   var labelTicker = document.getElementById("labelTicker");
   var labelModal = document.getElementById("labelModal");
+  var labelTp = document.getElementById("labelTp");
   var setupHint = document.getElementById("setupHint");
 
   function setAssetType(type){
@@ -905,15 +909,23 @@
     });
     if(type==="emas"){
       sahamFieldsEl.style.display = "none";
+      fieldEntry.style.display = "none";
+      entryTpRow.classList.add("single-col");
       labelTicker.textContent = "Nama Emas";
       els.ticker.placeholder = "cth. Antam 5gr";
       labelModal.textContent = "Modal Beli (Rp)";
+      labelTp.textContent = "Target Jual (Rp)";
+      els.tp.placeholder = "cth. 25000000";
       setupHint.textContent = "Catat modal beli, update nilai jual saat sudah terjual";
     } else {
       sahamFieldsEl.style.display = "";
+      fieldEntry.style.display = "";
+      entryTpRow.classList.remove("single-col");
       labelTicker.textContent = "Emiten";
       els.ticker.placeholder = "cth. ANTM";
       labelModal.textContent = "Modal Trading (Rp)";
+      labelTp.textContent = "Take Profit";
+      els.tp.placeholder = "2830";
       setupHint.textContent = "1 lot = 100 lembar";
     }
     renderCalc();
@@ -931,7 +943,7 @@
       tanggal: els.tanggal.value || todayISO(),
       modal: Number(els.modal.value)||0,
       entry: isEmas ? 0 : Number(els.entry.value)||0,
-      tp: isEmas ? 0 : Number(els.tp.value)||0,
+      tp: Number(els.tp.value)||0,
       sl: isEmas ? 0 : Number(els.sl.value)||0,
       feeBeli: isEmas ? 0 : Number(els.feeBeli.value)||0,
       feeJual: isEmas ? 0 : Number(els.feeJual.value)||0
@@ -944,8 +956,20 @@
     var ledger = document.getElementById("resultLedger");
 
     if(t.assetType==="emas"){
-      quick.innerHTML = stat("Modal Beli", fmtRp(t.modal), "gold");
-      ledger.innerHTML = '<div class="empty-state">Emas tidak memakai proyeksi TP/SL. Simpan modal beli di sini, lalu setelah dijual, ubah status jadi &ldquo;Terjual&rdquo; dan isi nilai jualnya dari tab Jurnal Transaksi.</div>';
+      var hasEmasTarget = t.tp>0;
+      var hasilProyeksi = hasEmasTarget ? (t.tp - t.modal) : null;
+      var pctProyeksi = (hasilProyeksi!==null && t.modal>0) ? (hasilProyeksi/t.modal*100) : null;
+
+      quick.innerHTML =
+        stat("Modal Beli", fmtRp(t.modal), "gold") +
+        stat("Target Jual", hasEmasTarget ? fmtRp(t.tp) : "—", "neutral") +
+        stat("Estimasi Profit", hasilProyeksi!==null ? fmtRp(hasilProyeksi) : "—", hasilProyeksi!==null ? (hasilProyeksi>=0?"profit":"loss") : "neutral") +
+        stat("Estimasi %", pctProyeksi!==null ? fmtPct(pctProyeksi) : "—", hasilProyeksi!==null ? (hasilProyeksi>=0?"profit":"loss") : "neutral");
+
+      ledger.innerHTML = '<div class="empty-state">' + (hasEmasTarget
+        ? "Proyeksi sederhana modal vs target jual &mdash; emas tidak memakai lot/TP-SL bertahap seperti saham."
+        : "Isi Target Jual (opsional) untuk melihat estimasi profit.") +
+        ' Setelah benar-benar terjual, ubah status jadi &ldquo;Terjual&rdquo; dan isi nilai jual sesungguhnya dari tab Jurnal Transaksi.</div>';
       return;
     }
 
@@ -1260,7 +1284,7 @@
         '<td class="ticker-cell">'+assetBadge+escapeHtml(t.ticker)+'</td>' +
         '<td class="num">'+fmtRp(t.modal)+'</td>' +
         '<td class="num">'+(isEmas?"—":fmtNum(t.entry))+'</td>' +
-        '<td class="num">'+(isEmas?"—":fmtNum(t.tp))+'</td>' +
+        '<td class="num">'+(isEmas?(t.tp>0?fmtRp(t.tp):"—"):fmtNum(t.tp))+'</td>' +
         '<td class="num">'+(isEmas?"—":fmtNum(t.sl))+'</td>' +
         '<td class="num">'+(isEmas?"—":fmtNum(c.lot))+'</td>' +
         '<td>' + statusCell(t) + '</td>' +
@@ -1269,7 +1293,7 @@
       '</tr>';
 
       var gridItemsHtml = isEmas
-        ? (jcItem("Modal", fmtRp(t.modal)) + jcItem("Hasil", hasilText, hasilCls, pctText))
+        ? (jcItem("Modal", fmtRp(t.modal)) + jcItem("Target Jual", t.tp>0?fmtRp(t.tp):"—") + jcItem("Hasil", hasilText, hasilCls, pctText))
         : (jcItem("Modal", fmtRp(t.modal)) + jcItem("Lot", fmtNum(c.lot)) + jcItem("Entry", fmtNum(t.entry)) +
            jcItem("Hasil", hasilText, hasilCls, pctText) + jcItem("TP", fmtNum(t.tp)) + jcItem("SL", fmtNum(t.sl)));
 
