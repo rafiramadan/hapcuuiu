@@ -1317,9 +1317,14 @@
     root.querySelectorAll('select[data-action="status"]').forEach(function(sel){
       sel.addEventListener("change", function(){
         var id = sel.closest("[data-id]").dataset.id;
+        var t = trades.find(function(x){ return x.id===id; });
         var newStatus = sel.value;
         var patch = { status: newStatus };
-        if(newStatus !== "manual") patch.exitPrice = null;
+        if(newStatus !== "manual"){
+          patch.exitPrice = null;
+        } else if(t && t.assetType==="emas" && (t.exitPrice===null||t.exitPrice===undefined) && t.tp>0){
+          patch.exitPrice = t.tp;
+        }
         sel.disabled = true;
         updateTradeRow(id, patch).then(function(res){
           sel.disabled = false;
