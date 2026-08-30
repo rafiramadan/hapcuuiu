@@ -219,6 +219,19 @@
   }
   .edit-banner strong{font-family:"IBM Plex Mono";}
 
+  .asset-toggle{display:flex;background:var(--surface-alt);border:1px solid var(--border);border-radius:99px;padding:3px;margin-bottom:16px;gap:2px;}
+  .asset-toggle-btn{
+    flex:1;appearance:none;border:none;background:transparent;color:var(--text-muted);
+    font-family:"Plus Jakarta Sans";font-weight:600;font-size:13px;border-radius:99px;padding:7px 12px;cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .asset-toggle-btn.active{background:var(--accent);color:var(--accent-contrast);}
+  .asset-toggle-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .asset-badge{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;
+    padding:1px 6px;border-radius:4px;margin-right:6px;vertical-align:middle;}
+  .asset-badge.saham{background:var(--accent-soft);color:var(--accent);}
+  .asset-badge.emas{background:var(--cat-gold-soft);color:var(--cat-gold);}
+
   .btn{
     appearance:none;border:1px solid var(--accent);background:var(--accent);color:var(--accent-contrast);
     font-family:"Plus Jakarta Sans";font-weight:600;font-size:13px;border-radius:6px;padding:9px 14px;cursor:pointer;
@@ -453,17 +466,21 @@
         <div class="card">
           <div class="card-header">
             <h2>Setup Trade</h2>
-            <span class="hint">1 lot = 100 lembar</span>
+            <span class="hint" id="setupHint">1 lot = 100 lembar</span>
           </div>
           <div class="card-body">
+            <div class="asset-toggle" id="assetToggle">
+              <button type="button" class="asset-toggle-btn active" data-asset="saham">Saham</button>
+              <button type="button" class="asset-toggle-btn" data-asset="emas">Emas</button>
+            </div>
             <div class="edit-banner" id="editBanner" style="display:none;">
               <span>Mengedit transaksi <strong id="editBannerTicker"></strong></span>
               <button type="button" class="icon-btn" id="btnCancelEdit">Batal</button>
             </div>
             <div class="row2">
               <div class="field">
-                <label for="in-ticker">Emiten</label>
-                <input type="text" id="in-ticker" placeholder="cth. ANTM" maxlength="8" style="text-transform:uppercase;">
+                <label for="in-ticker" id="labelTicker">Emiten</label>
+                <input type="text" id="in-ticker" placeholder="cth. ANTM" maxlength="24" style="text-transform:uppercase;">
               </div>
               <div class="field">
                 <label for="in-tanggal">Tanggal</label>
@@ -472,36 +489,38 @@
             </div>
 
             <div class="field">
-              <label for="in-modal">Modal Trading (Rp)</label>
+              <label for="in-modal" id="labelModal">Modal Trading (Rp)</label>
               <input type="number" id="in-modal" inputmode="decimal" placeholder="5000000" min="0" step="1000">
             </div>
 
-            <div class="row2">
+            <div id="sahamFields">
+              <div class="row2">
+                <div class="field">
+                  <label for="in-entry">Harga Entry</label>
+                  <input type="number" id="in-entry" inputmode="decimal" placeholder="2780" min="0" step="1">
+                </div>
+                <div class="field">
+                  <label for="in-tp">Take Profit</label>
+                  <input type="number" id="in-tp" inputmode="decimal" placeholder="2830" min="0" step="1">
+                </div>
+              </div>
+
               <div class="field">
-                <label for="in-entry">Harga Entry</label>
-                <input type="number" id="in-entry" inputmode="decimal" placeholder="2780" min="0" step="1">
+                <label for="in-sl">Cut Loss</label>
+                <input type="number" id="in-sl" inputmode="decimal" placeholder="2760" min="0" step="1">
               </div>
-              <div class="field">
-                <label for="in-tp">Take Profit</label>
-                <input type="number" id="in-tp" inputmode="decimal" placeholder="2830" min="0" step="1">
-              </div>
-            </div>
 
-            <div class="field">
-              <label for="in-sl">Cut Loss</label>
-              <input type="number" id="in-sl" inputmode="decimal" placeholder="2760" min="0" step="1">
-            </div>
+              <div class="divider"></div>
 
-            <div class="divider"></div>
-
-            <div class="row2">
-              <div class="field field-fee">
-                <label for="in-fee-beli">Fee Beli <span class="sub">broker + PPN</span></label>
-                <div class="fee-wrap"><input type="number" id="in-fee-beli" inputmode="decimal" step="0.001" min="0"></div>
-              </div>
-              <div class="field field-fee">
-                <label for="in-fee-jual">Fee Jual <span class="sub">broker + PPh</span></label>
-                <div class="fee-wrap"><input type="number" id="in-fee-jual" inputmode="decimal" step="0.001" min="0"></div>
+              <div class="row2">
+                <div class="field field-fee">
+                  <label for="in-fee-beli">Fee Beli <span class="sub">broker + PPN</span></label>
+                  <div class="fee-wrap"><input type="number" id="in-fee-beli" inputmode="decimal" step="0.001" min="0"></div>
+                </div>
+                <div class="field field-fee">
+                  <label for="in-fee-jual">Fee Jual <span class="sub">broker + PPh</span></label>
+                  <div class="fee-wrap"><input type="number" id="in-fee-jual" inputmode="decimal" step="0.001" min="0"></div>
+                </div>
               </div>
             </div>
 
@@ -542,6 +561,14 @@
             <div class="field">
               <label>Emiten</label>
               <input type="text" id="f-ticker" placeholder="cth. ANTM" style="text-transform:uppercase;">
+            </div>
+            <div class="field">
+              <label>Jenis Aset</label>
+              <select id="f-asset">
+                <option value="">Semua Aset</option>
+                <option value="saham">Saham</option>
+                <option value="emas">Emas</option>
+              </select>
             </div>
             <div class="field">
               <label>Status</label>
@@ -637,6 +664,11 @@
 
     <!-- RINGKASAN -->
     <section class="panel" id="panel-ringkasan">
+      <div class="asset-toggle" id="ringkasanAssetToggle" style="max-width:280px;margin-bottom:16px;">
+        <button type="button" class="asset-toggle-btn active" data-asset="">Semua</button>
+        <button type="button" class="asset-toggle-btn" data-asset="saham">Saham</button>
+        <button type="button" class="asset-toggle-btn" data-asset="emas">Emas</button>
+      </div>
       <div id="ringkasanContent"></div>
     </section>
 
@@ -747,6 +779,16 @@
   }
 
   function actualResultDetail(t){
+    if(t.assetType==="emas"){
+      if(t.status==="manual" && t.exitPrice!==null && t.exitPrice!==undefined && t.exitPrice!==""){
+        var modal = Number(t.modal)||0;
+        var nilaiJual = Number(t.exitPrice)||0;
+        var hasil = nilaiJual - modal;
+        var pct = modal>0 ? (hasil/modal*100) : null;
+        return { hasil:hasil, pct:pct, nilaiJual:nilaiJual };
+      }
+      return null;
+    }
     var c = calcTrade(t);
     if(t.status==="tp") return c.tp;
     if(t.status==="sl") return c.sl;
@@ -765,6 +807,7 @@
   function dbToTrade(row){
     return {
       id: row.id,
+      assetType: row.asset_type || "saham",
       ticker: row.ticker,
       tanggal: row.tanggal,
       modal: Number(row.modal),
@@ -794,7 +837,7 @@
   function insertTrade(t){
     if(!activeEmail) return Promise.resolve({ error:{ message:"Belum ada akun dipilih" } });
     return sb.from("trades").insert({
-      user_email: activeEmail, ticker: t.ticker, tanggal: t.tanggal, modal: t.modal,
+      user_email: activeEmail, asset_type: t.assetType||"saham", ticker: t.ticker, tanggal: t.tanggal, modal: t.modal,
       entry: t.entry, tp: t.tp, sl: t.sl, fee_beli: t.feeBeli, fee_jual: t.feeJual, status:"planned"
     });
   }
@@ -808,7 +851,7 @@
 
   function updateTradeFull(id, t){
     return sb.from("trades").update({
-      ticker: t.ticker, tanggal: t.tanggal, modal: t.modal,
+      asset_type: t.assetType||"saham", ticker: t.ticker, tanggal: t.tanggal, modal: t.modal,
       entry: t.entry, tp: t.tp, sl: t.sl, fee_beli: t.feeBeli, fee_jual: t.feeJual
     }).eq("id", id);
   }
@@ -849,24 +892,64 @@
   els.feeBeli.value = settings.feeBeli;
   els.feeJual.value = settings.feeJual;
 
+  var currentAssetType = "saham";
+  var sahamFieldsEl = document.getElementById("sahamFields");
+  var labelTicker = document.getElementById("labelTicker");
+  var labelModal = document.getElementById("labelModal");
+  var setupHint = document.getElementById("setupHint");
+
+  function setAssetType(type){
+    currentAssetType = type;
+    document.querySelectorAll("#assetToggle .asset-toggle-btn").forEach(function(b){
+      b.classList.toggle("active", b.dataset.asset===type);
+    });
+    if(type==="emas"){
+      sahamFieldsEl.style.display = "none";
+      labelTicker.textContent = "Nama Emas";
+      els.ticker.placeholder = "cth. Antam 5gr";
+      labelModal.textContent = "Modal Beli (Rp)";
+      setupHint.textContent = "Catat modal beli, update nilai jual saat sudah terjual";
+    } else {
+      sahamFieldsEl.style.display = "";
+      labelTicker.textContent = "Emiten";
+      els.ticker.placeholder = "cth. ANTM";
+      labelModal.textContent = "Modal Trading (Rp)";
+      setupHint.textContent = "1 lot = 100 lembar";
+    }
+    renderCalc();
+  }
+
+  document.querySelectorAll("#assetToggle .asset-toggle-btn").forEach(function(btn){
+    btn.addEventListener("click", function(){ setAssetType(btn.dataset.asset); });
+  });
+
   function currentFormTrade(){
+    var isEmas = currentAssetType==="emas";
     return {
+      assetType: currentAssetType,
       ticker: (els.ticker.value||"").trim().toUpperCase(),
       tanggal: els.tanggal.value || todayISO(),
       modal: Number(els.modal.value)||0,
-      entry: Number(els.entry.value)||0,
-      tp: Number(els.tp.value)||0,
-      sl: Number(els.sl.value)||0,
-      feeBeli: Number(els.feeBeli.value)||0,
-      feeJual: Number(els.feeJual.value)||0
+      entry: isEmas ? 0 : Number(els.entry.value)||0,
+      tp: isEmas ? 0 : Number(els.tp.value)||0,
+      sl: isEmas ? 0 : Number(els.sl.value)||0,
+      feeBeli: isEmas ? 0 : Number(els.feeBeli.value)||0,
+      feeJual: isEmas ? 0 : Number(els.feeJual.value)||0
     };
   }
 
   function renderCalc(){
     var t = currentFormTrade();
-    var c = calcTrade(t);
     var quick = document.getElementById("quickStats");
     var ledger = document.getElementById("resultLedger");
+
+    if(t.assetType==="emas"){
+      quick.innerHTML = stat("Modal Beli", fmtRp(t.modal), "gold");
+      ledger.innerHTML = '<div class="empty-state">Emas tidak memakai proyeksi TP/SL. Simpan modal beli di sini, lalu setelah dijual, ubah status jadi &ldquo;Terjual&rdquo; dan isi nilai jualnya dari tab Jurnal Transaksi.</div>';
+      return;
+    }
+
+    var c = calcTrade(t);
 
     quick.innerHTML =
       stat("Jumlah Lot", fmtNum(c.lot), "purple") +
@@ -936,6 +1019,7 @@
 
   function enterEditMode(t){
     editingId = t.id;
+    setAssetType(t.assetType||"saham");
     els.ticker.value = t.ticker;
     els.tanggal.value = t.tanggal;
     els.modal.value = t.modal;
@@ -961,18 +1045,23 @@
   document.getElementById("btnCancelEdit").addEventListener("click", function(){
     exitEditMode();
     els.ticker.value=""; els.tanggal.value=todayISO(); els.modal.value=""; els.entry.value=""; els.tp.value=""; els.sl.value="";
-    renderCalc();
+    setAssetType("saham");
   });
 
   document.getElementById("btn-reset-form").addEventListener("click", function(){
     exitEditMode();
     els.ticker.value=""; els.tanggal.value=todayISO(); els.modal.value=""; els.entry.value=""; els.tp.value=""; els.sl.value="";
-    renderCalc();
+    setAssetType("saham");
   });
 
   btnSaveTrade.addEventListener("click", function(){
     var t = currentFormTrade();
-    if(!t.ticker || !t.modal || !t.entry || !t.tp || !t.sl){
+    if(t.assetType==="emas"){
+      if(!t.ticker || !t.modal){
+        alert("Lengkapi Nama Emas dan Modal Beli terlebih dahulu.");
+        return;
+      }
+    } else if(!t.ticker || !t.modal || !t.entry || !t.tp || !t.sl){
       alert("Lengkapi Emiten, Modal, Harga Entry, Take Profit, dan Cut Loss terlebih dahulu.");
       return;
     }
@@ -988,7 +1077,7 @@
         afterTradesChanged();
         if(wasEditing){
           els.ticker.value=""; els.tanggal.value=todayISO(); els.modal.value=""; els.entry.value=""; els.tp.value=""; els.sl.value="";
-          renderCalc();
+          setAssetType("saham");
         }
         activateTab("jurnal");
       });
@@ -996,29 +1085,40 @@
   });
 
   // ---- jurnal ----
-  var STATUS_OPTS = [
+  var STATUS_OPTS_SAHAM = [
     ["planned","Rencana"],
     ["bought","Sudah Dibeli"],
     ["tp","Take Profit"],
     ["sl","Cut Loss"],
     ["manual","Manual"]
   ];
+  var STATUS_OPTS_EMAS = [
+    ["planned","Rencana"],
+    ["bought","Dimiliki"],
+    ["manual","Terjual"]
+  ];
   var CLOSED_STATUSES = ["tp","sl","manual"];
-  function statusLabel(status){
-    return (STATUS_OPTS.find(function(o){ return o[0]===status; }) || STATUS_OPTS[0])[1];
+  function statusOptsFor(t){
+    return t.assetType==="emas" ? STATUS_OPTS_EMAS : STATUS_OPTS_SAHAM;
+  }
+  function statusLabel(t){
+    var opts = statusOptsFor(t);
+    return (opts.find(function(o){ return o[0]===t.status; }) || opts[0])[1];
   }
   function statusControlsHtml(t){
+    var opts = statusOptsFor(t);
     var selectHtml = '<select class="status-select" data-action="status">' +
-      STATUS_OPTS.map(function(o){ return '<option value="'+o[0]+'"'+(t.status===o[0]?" selected":"")+'>'+o[1]+'</option>'; }).join("") +
+      opts.map(function(o){ return '<option value="'+o[0]+'"'+(t.status===o[0]?" selected":"")+'>'+o[1]+'</option>'; }).join("") +
       '</select>';
     var extra = "";
     if(t.status==="manual"){
-      extra = ' <input type="number" class="exit-input" data-action="exit" placeholder="harga exit" value="'+(t.exitPrice||"")+'">';
+      var placeholder = t.assetType==="emas" ? "nilai jual" : "harga exit";
+      extra = ' <input type="number" class="exit-input" data-action="exit" placeholder="'+placeholder+'" value="'+(t.exitPrice||"")+'">';
     }
     return selectHtml + extra;
   }
   function statusCell(t){
-    return '<span class="pill '+(t.status||"planned")+'">'+statusLabel(t.status)+'</span><br>' +
+    return '<span class="pill '+(t.status||"planned")+'">'+statusLabel(t)+'</span><br>' +
       '<div style="margin-top:6px;">'+statusControlsHtml(t)+'</div>';
   }
   function jcItem(label, value, extraCls, subText){
@@ -1035,6 +1135,7 @@
     tglDari: document.getElementById("f-tgl-dari"),
     tglSampai: document.getElementById("f-tgl-sampai"),
     ticker: document.getElementById("f-ticker"),
+    assetType: document.getElementById("f-asset"),
     status: document.getElementById("f-status"),
     modalMin: document.getElementById("f-modal-min"),
     modalMax: document.getElementById("f-modal-max"),
@@ -1054,6 +1155,7 @@
     var tglDari = filterEls.tglDari.value;
     var tglSampai = filterEls.tglSampai.value;
     var ticker = filterEls.ticker.value.trim().toUpperCase();
+    var assetType = filterEls.assetType.value;
     var status = filterEls.status.value;
     var modalMin = parseNum(filterEls.modalMin.value), modalMax = parseNum(filterEls.modalMax.value);
     var entryMin = parseNum(filterEls.entryMin.value), entryMax = parseNum(filterEls.entryMax.value);
@@ -1066,6 +1168,7 @@
       if(tglDari && t.tanggal < tglDari) return false;
       if(tglSampai && t.tanggal > tglSampai) return false;
       if(ticker && (t.ticker||"").toUpperCase().indexOf(ticker)===-1) return false;
+      if(assetType && (t.assetType||"saham") !== assetType) return false;
       if(status && t.status !== status) return false;
       if(modalMin!==null && t.modal < modalMin) return false;
       if(modalMax!==null && t.modal > modalMax) return false;
@@ -1140,7 +1243,8 @@
 
     var rowsHtml = "", cardsHtml = "";
     list.forEach(function(t){
-      var c = calcTrade(t);
+      var isEmas = t.assetType==="emas";
+      var c = isEmas ? null : calcTrade(t);
       var d = actualResultDetail(t);
       var hasil = d ? d.hasil : null;
       var hasilCls = hasil===null ? "" : (hasil>=0 ? "profit" : "loss");
@@ -1149,34 +1253,33 @@
       var hasilCell = hasil===null ? '<span style="color:var(--text-faint);">—</span>' :
         '<span style="color:'+(hasil>=0?'var(--profit)':'var(--loss)')+';font-weight:600;">'+hasilText +
         (pctText? ' <span class="mono" style="font-weight:500;font-size:11.5px;">('+pctText+')</span>' : '') + '</span>';
+      var assetBadge = '<span class="asset-badge '+(isEmas?"emas":"saham")+'">'+(isEmas?"Emas":"Saham")+'</span>';
 
       rowsHtml += '<tr data-id="'+t.id+'">' +
         '<td>'+(t.tanggal||"—")+'</td>' +
-        '<td class="ticker-cell">'+escapeHtml(t.ticker)+'</td>' +
+        '<td class="ticker-cell">'+assetBadge+escapeHtml(t.ticker)+'</td>' +
         '<td class="num">'+fmtRp(t.modal)+'</td>' +
-        '<td class="num">'+fmtNum(t.entry)+'</td>' +
-        '<td class="num">'+fmtNum(t.tp)+'</td>' +
-        '<td class="num">'+fmtNum(t.sl)+'</td>' +
-        '<td class="num">'+fmtNum(c.lot)+'</td>' +
+        '<td class="num">'+(isEmas?"—":fmtNum(t.entry))+'</td>' +
+        '<td class="num">'+(isEmas?"—":fmtNum(t.tp))+'</td>' +
+        '<td class="num">'+(isEmas?"—":fmtNum(t.sl))+'</td>' +
+        '<td class="num">'+(isEmas?"—":fmtNum(c.lot))+'</td>' +
         '<td>' + statusCell(t) + '</td>' +
         '<td class="num">'+hasilCell+'</td>' +
         '<td style="white-space:nowrap;"><button class="icon-btn" data-action="edit">Edit</button> <button class="icon-btn danger" data-action="delete">Hapus</button></td>' +
       '</tr>';
 
+      var gridItemsHtml = isEmas
+        ? (jcItem("Modal", fmtRp(t.modal)) + jcItem("Hasil", hasilText, hasilCls, pctText))
+        : (jcItem("Modal", fmtRp(t.modal)) + jcItem("Lot", fmtNum(c.lot)) + jcItem("Entry", fmtNum(t.entry)) +
+           jcItem("Hasil", hasilText, hasilCls, pctText) + jcItem("TP", fmtNum(t.tp)) + jcItem("SL", fmtNum(t.sl)));
+
       cardsHtml += '<div class="jurnal-card" data-id="'+t.id+'">' +
         '<div class="jc-head">' +
-          '<span class="ticker-cell">'+escapeHtml(t.ticker)+'</span>' +
-          '<span class="pill '+(t.status||"planned")+'">'+statusLabel(t.status)+'</span>' +
+          '<span class="ticker-cell">'+assetBadge+escapeHtml(t.ticker)+'</span>' +
+          '<span class="pill '+(t.status||"planned")+'">'+statusLabel(t)+'</span>' +
         '</div>' +
         '<div class="jc-date">'+(t.tanggal||"—")+'</div>' +
-        '<div class="jc-grid">' +
-          jcItem("Modal", fmtRp(t.modal)) +
-          jcItem("Lot", fmtNum(c.lot)) +
-          jcItem("Entry", fmtNum(t.entry)) +
-          jcItem("Hasil", hasilText, hasilCls, pctText) +
-          jcItem("TP", fmtNum(t.tp)) +
-          jcItem("SL", fmtNum(t.sl)) +
-        '</div>' +
+        '<div class="jc-grid">' + gridItemsHtml + '</div>' +
         '<div class="jc-controls">' + statusControlsHtml(t) +
           '<button class="icon-btn" data-action="edit" style="margin-left:auto;">Edit</button>' +
           '<button class="icon-btn danger" data-action="delete">Hapus</button>' +
@@ -1271,9 +1374,24 @@
     return d.toLocaleDateString("id-ID", {month:"long", year:"numeric"});
   }
 
+  var ringkasanAssetFilter = "";
+  document.querySelectorAll("#ringkasanAssetToggle .asset-toggle-btn").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      ringkasanAssetFilter = btn.dataset.asset;
+      document.querySelectorAll("#ringkasanAssetToggle .asset-toggle-btn").forEach(function(b){
+        b.classList.toggle("active", b===btn);
+      });
+      renderRingkasan();
+    });
+  });
+
   function renderRingkasan(){
     var wrap = document.getElementById("ringkasanContent");
-    var closed = trades.filter(function(t){ return CLOSED_STATUSES.indexOf(t.status) !== -1; });
+    var closed = trades.filter(function(t){
+      if(CLOSED_STATUSES.indexOf(t.status)===-1) return false;
+      if(ringkasanAssetFilter && (t.assetType||"saham")!==ringkasanAssetFilter) return false;
+      return true;
+    });
 
     if(closed.length===0){
       wrap.innerHTML = '<div class="card"><div class="empty-state">Belum ada transaksi yang ditandai Take Profit / Cut Loss / Manual. Update status di tab Jurnal Transaksi untuk melihat ringkasan bulanan.</div></div>';
